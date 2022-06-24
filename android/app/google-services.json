@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "242251383054",
+    "firebase_url": "https://chatapp-75d77-default-rtdb.firebaseio.com",
+    "project_id": "chatapp-75d77",
+    "storage_bucket": "chatapp-75d77.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242251383054:android:3a8249f07eca0573e9d75f",
+        "android_client_info": {
+          "package_name": "com.chatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "242251383054-er7vqtgb95304s4q8bt4qlsrt4qml4mm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmkwQTOtxlA1prLFzc1VnIWvtarPfPLmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "242251383054-er7vqtgb95304s4q8bt4qlsrt4qml4mm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "242251383054-61pv56v8lqmdl765inspl1l334mh0j7e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.reactjs.native.example.chatapp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:242251383054:android:64d4667f6e828595e9d75f",
+        "android_client_info": {
+          "package_name": "com.chatapp1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "242251383054-er7vqtgb95304s4q8bt4qlsrt4qml4mm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmkwQTOtxlA1prLFzc1VnIWvtarPfPLmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "242251383054-er7vqtgb95304s4q8bt4qlsrt4qml4mm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "242251383054-61pv56v8lqmdl765inspl1l334mh0j7e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.reactjs.native.example.chatapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
