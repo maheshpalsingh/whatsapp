@@ -15,6 +15,7 @@ import { createStore, combineReducers, applyMiddleware } from "redux";
 import { persistStore, persistReducer } from "redux-persist";
 
 import userReducers from "./src/store/reducers/users";
+import messageReducers from "./src/store/reducers/messages";
 import NavIndex from "./src/navigations";
 import { Provider } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -22,11 +23,15 @@ import { View, Text, SafeAreaView, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 const rootReducer = combineReducers({
   user: userReducers,
+  message:messageReducers
 });
 
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
+  whitelist:[
+    'user'
+  ]
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

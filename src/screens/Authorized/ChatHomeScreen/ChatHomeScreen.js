@@ -146,17 +146,17 @@ const ChatHomeScreen = ({ navigation }) => {
                 },
               ));
 
-            let user2 = documentSnapshot.id.replace(uid, "");
+            let otherUserId = documentSnapshot.id.replace(uid, "");
             firestore()
               .collection("Users")
-              .doc(user2)
+              .doc(otherUserId)
               .get()
               .then(documentSnapshot => {
                 if (documentSnapshot.exists) {
-                  let image = user2 + ".jpg";
+                  let image = otherUserId + ".jpg";
                   let obj = {};
 
-                  obj.id = user2;
+                  obj.id = otherUserId;
                   obj.name = documentSnapshot.data().name;
                   obj.phone = documentSnapshot.data().phone;
                   storage()
@@ -172,7 +172,7 @@ const ChatHomeScreen = ({ navigation }) => {
                     });
 
                   database()
-                    .ref(`/online/${user2}`)
+                    .ref(`/online/${otherUserId}`)
                     .on("value", snapshot => {
                       //console.log('User data: ', snapshot.val());
                       setStatus(snapshot.val()?.isActive);

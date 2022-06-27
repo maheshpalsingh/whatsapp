@@ -22,7 +22,7 @@ const ChatView = ({ contact, onPress, userstatus, lastseen, mess }) => {
         </Text>
         <View style={{ flexDirection: "row" }}>
           <Icon name="checkmark-done-outline" size={20} style={{ paddingLeft: 5, paddingTop: 5 }}
-                color={mess.seen ? "#3AB0FF" : "grey"} />
+                color={mess?.seen ? "#3AB0FF" : "grey"} />
           <Text style={{ paddingLeft: 5, paddingTop: 5, color: "#fff" }}>{mess.text}</Text>
         </View>
 
@@ -35,7 +35,7 @@ const ChatView = ({ contact, onPress, userstatus, lastseen, mess }) => {
           color: "#fff",
         }}>
 
-          {moment(mess?.time.toDate()).format(" hh:mm a")}
+          {moment(mess?.time?.toDate()).format("hh:mm a")}
         </Text>
         {/*{userstatus ?<Text style={{color:'#fff'}}>Online</Text>:<Text style={{color:'#fff'}}>{lastseen?.slice(15,21)}</Text>}*/}
       </View>

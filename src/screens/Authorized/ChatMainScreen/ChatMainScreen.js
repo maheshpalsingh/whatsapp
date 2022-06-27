@@ -15,37 +15,62 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import firestore from "@react-native-firebase/firestore";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as ImagePicker from "react-native-image-picker";
 import MessageView from "./MessageView";
-import '@react-native-firebase/messaging';
+import "@react-native-firebase/messaging";
 import { useNavigation } from "@react-navigation/native";
 
 import storage, { firebase } from "@react-native-firebase/storage";
 import database from "@react-native-firebase/database";
 import axios from "axios";
-import DeleteModal from "../ChatHomeScreen/DeleteModal";
+import * as messageActions from "../../../store/actions/messages";
+import moment from "moment";
+import { READ_MESSAGE } from "../../../store/actions/messages";
 
 const ChatMainScreen = ({ route }) => {
   const navigation = useNavigation();
   const [userStatus, setStatus] = useState(false);
   const [userLastSeen, setLastSeen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const selectedID= useRef()
-  const messageSenderID= useRef()
+  const selectedID = useRef();
+  const messageSenderID = useRef();
   const flatlistRef = useRef();
-  const uid1 = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.token);
   const items = route?.params?.item;
   const channelID = route?.params?.channelID;
-  const user2=channelID.replace(uid1,'')
+  const otherUserId = channelID.replace(uid, "");
   //console.log(userLastSeen,userStatus,'2');
-  const [message, setMessage] = useState([]);
-  const [newMessage, setnewMessage] = useState();
+  // const [message, setMessage] = useState([]);
+  const [newMessage, setnewMessage] = useState("");
+  const getMessage = useSelector(state => state.message.messages[channelID]);
 
-
+  const message = getMessage || [];
+  // console.log("message",message[0]);
+  const dispatch = useDispatch();
   let imageUrl = items.image;
 
+  const getAllMessages = async () => {
+    await dispatch(messageActions.readAllMessages(channelID));
+  };
+  const lastVisible = message[0]?.created_at;
+  const getNewMessage = async () => {
+    dispatch(messageActions.readNewMessage(channelID, lastVisible));
+  };
+
   useEffect(() => {
+    if (message.length === 0) {
+      console.log("initial");
+      getAllMessages().then();
+    } else {
+      console.log("update");
+      getNewMessage().then();
+    }
+  }, [channelID]);
+
+
+  useEffect(() => {
+
     database()
       .ref(`/online/${items.id}`)
       .on("value", snapshot => {
@@ -54,202 +79,292 @@ const ChatMainScreen = ({ route }) => {
         setLastSeen(snapshot.val()?.lastSeen?.slice(0, 21));
       });
 
-
-    const subscriber = firestore()
-      .collection("Channels")
-      .doc(channelID)
-      .collection("messages")
-      .orderBy("time", "asc")
-      // .get()
-      // .then(documentSnapshot => {
-      //   const temp = [];
-      //   if (documentSnapshot) {
-      //     documentSnapshot.docs.forEach(doc => {
-      //       temp.push(doc.data());
-      //     });
-      //   }
-      //   setMessage((prevState => [...prevState, ...temp]));
-      // });
-      // .onSnapshot(
-      //   documentSnapshot => {
-      //     const temp=[]
-      //   if (documentSnapshot) {
-      //
-      //     documentSnapshot.docs.forEach(doc=>{
-      //
-      //       // console.log('1',new Date(doc.data().time.toDate()).toLocaleTimeString());
-      //       //console.log(doc.data());
-      //       temp.push(doc.data());
-      //     })
-      //   }
-      //   setMessage((prevState => [...prevState,...temp]));
-      // })
-
-      .onSnapshot(snapshot => snapshot.docChanges().forEach(
-        change => {
-          const temp = [];
-          if (change.type === "added") {
-            //console.log("old message: ", change.doc.data());
-            if (change.doc.data().sender !== uid1) {
-              firestore()
-                .collection(`Channels/${channelID}/messages`)
-                .doc(change.doc.id)
-                .update({
-                  seen: true,
-                })
-                .then(() => {
-                  //     console.log('User updated!');
-                });
-            }
-
-            temp.push({ ...change.doc.data(), id: change.doc.id });
-          }
-          if (change.type === "modified") {
-            // console.log("new message: ", change.doc.data());
-            if (change.doc.data().sender !== uid1) {
-              firestore()
-                .collection(`Channels/${channelID}/messages`)
-                .doc(change.doc.id)
-                .update({
-                  seen: true,
-                })
-                .then(() => {
-                  //     console.log('User updated!');
-                });
-            }
-
-            temp.push({ ...change.doc.data(), id: change.doc.id });
-          }
-
-          setMessage((prevState => [...temp,...prevState.filter(item => item.id !== change.doc.id)]));
-        },
-      ));
-    return () => subscriber();
+    // const subscriber = firestore()
+    //   .collection("Channels")
+    //   .doc(channelID)
+    //   .collection("messages")
+    //   .orderBy("time", "asc")
+    //   // .get()
+    //   // .then(documentSnapshot => {
+    //   //   const temp = [];
+    //   //   if (documentSnapshot) {
+    //   //     documentSnapshot.docs.forEach(doc => {
+    //   //       temp.push(doc.data());
+    //   //     });
+    //   //   }
+    //   //   setMessage((prevState => [...prevState, ...temp]));
+    //   // });
+    //   // .onSnapshot(
+    //   //   documentSnapshot => {
+    //   //     const temp=[]
+    //   //   if (documentSnapshot) {
+    //   //
+    //   //     documentSnapshot.docs.forEach(doc=>{
+    //   //
+    //   //       // console.log('1',new Date(doc.data().time.toDate()).toLocaleTimeString());
+    //   //       //console.log(doc.data());
+    //   //       temp.push(doc.data());
+    //   //     })
+    //   //   }
+    //   //   setMessage((prevState => [...prevState,...temp]));
+    //   // })
+    //   .onSnapshot(snapshot => snapshot.docChanges().forEach(
+    //     change => {
+    //       const temp = [];
+    //       if (change.type === "added") {
+    //         console.log("old message: ", change.doc.data());
+    //         if (change.doc.data().sender !== uid) {
+    //           firestore()
+    //             .collection(`Channels/${channelID}/messages`)
+    //             .doc(change.doc.id)
+    //             .update({
+    //               seen: true,
+    //             })
+    //             .then(() => {
+    //               //    console.log('User updated!');
+    //             });
+    //         }
+    //
+    //         temp.push({ ...change.doc.data(), id: change.doc.id });
+    //       }
+    //       if (change.type === "modified") {
+    //         // console.log("new message: ", change.doc.data());
+    //         if (change.doc.data().sender !== uid) {
+    //           firestore()
+    //             .collection(`Channels/${channelID}/messages`)
+    //             .doc(change.doc.id)
+    //             .update({
+    //
+    //               seen: true,
+    //             })
+    //             .then((d) => {
+    //                   console.log('User updated!',d);
+    //             });
+    //         }
+    //
+    //         temp.push({ ...change.doc.data(), id: change.doc.id });
+    //       }
+    //
+    //       setMessage((prevState => [...temp, ...prevState.filter(item => item.id !== change.doc.id)]));
+    //     },
+    //   ));
+    //return () => subscriber();
   }, [items.id]);
 
-  const updatedMessages = () => {
-    firestore()
-      .collection("Channels")
-      .doc(channelID)
-      .collection("messages")
-      .orderBy("time", "desc")
-      .limit(1)
-      .get()
-      .then(documentSnapshot => {
-        const temp = [];
-        documentSnapshot.docs.forEach(doc => {
-          console.log("new data", doc.data());
-          temp.push(doc.data());
-        });
-        setMessage((prevState => [...prevState, ...temp]));
-        // setTimeout(() => {
-        //   flatlistRef.current.scrollToEnd();
-        // }, 100);
 
-      });
-  };
+  const sendMessage = async () => {
+    if (newMessage.trim().length > 0) {
+      const message_ref = firestore().collection("Channels").doc(channelID).collection("messages").doc();
+      const last_ref = firestore().collection("Channels").doc(channelID);
+      const obj = {
+        type: "text",
+        sender: uid,
+        text: newMessage,
+        created_at: new Date(),
+        updated_at: new Date(),
+        seen: false,
+      };
 
-  const sendMessage = () => {
-
-
-    firestore()
-      .collection("Channels")
-      .doc(channelID)
-      .collection("messages")
-      .doc()
-      .set(
-        {
-          type: "text",
-          sender: uid1,
-          text: newMessage,
-          time: new Date(),
-          seen: false,
-         // deletedforAll:false,
-        },
+      message_ref.set(
+        obj,
         { merge: true },
-      )
-      .then(() => {
-        console.log("Message added!");
+      ).then(async () => {
         setnewMessage("");
-        //call notification
-        axios
-          .post('http://127.0.0.1:3000/sendmessages',{channelid:channelID,senderid:uid1,text:newMessage,recieverid:user2})
-          .then((response) => {
-            setnewMessage("");
 
-          })
-          .catch((error) => {
-            console.error(error,'w');
-          });
-      })
-      .catch(e => {
-        console.log(e);
+        dispatch({
+          type: READ_MESSAGE,
+          payload: { [channelID]: [{ message_id: message_ref.id, ...obj }, ...message] },
+        });
       });
 
+      last_ref.set({
+        updated_at: new Date(),
+        sender_id: uid,
+        receiver_id: otherUserId,
+        seen_by: false,
+        last_message_type: "text",
+        last_message: newMessage,
+        message_id: message_ref.id,
+      }).then();
+
+
+      await axios.post("http://127.0.0.1:3000/sendmessages", {
+        channelid: channelID,
+        senderid: uid,
+        text: newMessage,
+        recieverid: otherUserId,
+      });
+    }
+    // if (newMessage.trim().length > 0) {
+    //   firestore()
+    //     .collection("Channels")
+    //     .doc(channelID)
+    //     .collection("messages")
+    //     .doc()
+    //     .set(
+    //       {
+    //         type: "text",
+    //         sender: uid,
+    //         text: newMessage,
+    //         time: new Date(),
+    //         seen: false,
+    //         // deleted_for_all:false,
+    //       },
+    //       { merge: true },
+    //     )
+    //     .then((res) => {
+    //       console.log("Message added!");
+    //       setnewMessage("");
+    //       //call notification
+    //       axios
+    //         .post("http://127.0.0.1:3000/sendmessages", {
+    //           channelid: channelID,
+    //           senderid: uid,
+    //           text: newMessage,
+    //           recieverid: otherUserId,
+    //         })
+    //         .then((response) => {
+    //           setnewMessage("");
+    //
+    //         })
+    //         .catch((error) => {
+    //           console.error(error, "w");
+    //         });
+    //
+    //     //update last message
+    //     //     firestore()
+    //     //       .collection("Channels")
+    //     //       .doc(channelID)
+    //     //       .set(
+    //     //         {
+    //     //           member:[uid,otherUserId],
+    //     //           type: "text",
+    //     //           sender: uid,
+    //     //           reciever: otherUserId,
+    //     //           text: newMessage,
+    //     //           updatedAt: new Date(),
+    //     //           deleteForMe:false,
+    //     //           deleted_for_all:false,
+    //     //           seen: false,
+    //     //           messageID:''
+    //     //         }
+    //     //       )
+    //     //       .then(() => {
+    //     //         console.log("Last message updated!");
+    //     //       })
+    //     //       .catch(e => {
+    //     //         console.log(e);
+    //     //       });
+    //
+    //     })
+    //     .catch(e => {
+    //       console.log(e);
+    //     });
+    // }
   };
 
-  const deleteForMe=()=>{
+  const deleteForMe = () => {
 
-    setModalVisible(!modalVisible)
-    console.log('pressed',selectedID.current,messageSenderID.current,uid1);
-    if(selectedID.current)
-    {
-      console.log('my message');
+    setModalVisible(!modalVisible);
+    console.log("pressed", selectedID.current, messageSenderID.current, uid);
+    if (selectedID.current) {
+      console.log("my message");
       firestore()
         .collection("Channels")
         .doc(channelID)
         .collection("messages")
         .doc(selectedID.current)
         .set({
-          deletedforMe:firestore.FieldValue.arrayUnion(uid1)
-        }
-        ,{
-          merge:true
+            deleted_for_me: firestore.FieldValue.arrayUnion(uid),
+          }
+          , {
+            merge: true,
           })
         .then(() => {
-          console.log('message deletedforAll!');
+          console.log("message deleted_for_all!");
         });
-     }
-    else{
-      console.log('sss');
+
+      firestore()
+        .collection("Channels")
+        .doc(channelID)
+        .set(
+          {
+            updated_at: new Date(),
+            sender_id: uid,
+            receiver_id: otherUserId,
+            seen_by: false,
+            last_message_type: "text",
+            last_message: newMessage,
+            message_id: message_ref.id,
+            deleted_for_me: firestore.FieldValue.arrayUnion(uid),
+          }
+          , { merge: true },
+        ).then();
+
+    } else {
+      console.log("sss");
     }
-  }
-  const deleteForEveryone=()=>{
-    console.log('delete for me',selectedID.current);
-    setModalVisible(!modalVisible)
-    console.log('pressed',selectedID.current,messageSenderID.current,uid1);
-    if(selectedID.current && messageSenderID.current===uid1)
-    {
-      console.log('1111');
+  };
+  const deleteForEveryone = () => {
+    console.log("delete for me", selectedID.current);
+    setModalVisible(!modalVisible);
+    console.log("pressed", selectedID.current, messageSenderID.current, uid);
+    if (selectedID.current && messageSenderID.current === uid) {
+      console.log("1111",selectedID.current);
       firestore()
         .collection("Channels")
         .doc(channelID)
         .collection("messages")
         .doc(selectedID.current)
         .set({
-          deletedforAll:true
-        },{
-          merge:true
+          deleted_for_all: true,
+          updated_at: new Date(),
+        }, {
+          merge: true,
         })
         .then(() => {
-          console.log('message deleted!');
+
+          console.log("message deleted!");
+
+          // console.log(message.includes(selectedID.current),'111111')
+          let obj = message.find(o => o.message_id === selectedID.current);
+
+          let obj1={...message,deleted_for_all:obj.deleted_for_all(true)}
+
+            dispatch({
+              type: READ_MESSAGE,
+              payload: {[channelID]:[...message,...obj1]},
+            });
+
+
+          // const updatemessage={...message,message:message[obj.message_id]}
+          // console.log('idid',obj.message_id);
         });
+      // console.log('messsages',message);
+      // firestore()
+      //   .collection("Channels")
+      //   .doc(channelID)
+      //   .set({
+      //     updated_at: new Date(),
+      //     deleted_for_all: true,
+      //   }, {
+      //     merge: true,
+      //   }).then();
     }
-  }
+  };
 
 
-  const onLongPress=(messageID,senderID)=>{
-    selectedID.current=messageID
-    messageSenderID.current=senderID
+  const onLongPress = (messageID, senderID) => {
+    selectedID.current = messageID;
+    messageSenderID.current = senderID;
     //console.log(selectedID.current,messageSenderID.current,'aaaa');
-    setModalVisible(true)
+    setModalVisible(true);
 
-  }
+  };
 
 
   const keyExtractor = (item, idx) => {
-    // console.log(item);
-    return item?.recordID?.toString() || idx.toString();
+    return item?.message_id;
   };
   const renderItem = ({ item, index }) => {
     return <MessageView message={item} onLongPress={onLongPress} />;
@@ -301,7 +416,7 @@ const ChatMainScreen = ({ route }) => {
                   .set(
                     {
                       type: "image",
-                      sender: uid1,
+                      sender: uid,
                       image: url,
                       time: new Date(),
                       seen: false,
@@ -327,7 +442,7 @@ const ChatMainScreen = ({ route }) => {
       }
     });
   };
-const bg="https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg"
+  const bg = "https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg";
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#222D36" }}>
       <StatusBar barStyle="light-content" />
@@ -403,7 +518,6 @@ const bg="https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af
         </View>
 
 
-
         <View style={{ flex: 1 }}>
 
 
@@ -416,7 +530,7 @@ const bg="https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af
             //   flatlistRef.current.scrollToEnd();
             // }}
             data={message}
-            contentContainerStyle={{  flexGrow: 1, paddingVertical: 15 }}
+            contentContainerStyle={{ flexGrow: 1, paddingVertical: 15 }}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
             style={{ flex: 1 }}
@@ -429,21 +543,21 @@ const bg="https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af
         {/*Footer*/}
         <View style={styles.footer}>
 
-            <TouchableOpacity onPress={launchCamera} style={styles.emoji}>
-              <Icon name="camera" size={30} color="grey" />
-            </TouchableOpacity>
-            {/*<View style={{ flex: 1,alignSelf:'center' }}>*/}
-              <View style={{ flex: 1 }}>
-              <TextInput
-                placeholder="Message"
-                placeholderTextColor="grey"
-                value={newMessage}
-                onChangeText={(t) => setnewMessage(t)}
-                style={styles.input} />
-            </View>
-            <TouchableOpacity onPress={sendMessage} style={styles.send}>
-              <Icon name="send-outline" size={27} color="white" />
-            </TouchableOpacity>
+          <TouchableOpacity onPress={launchCamera} style={styles.emoji}>
+            <Icon name="camera" size={30} color="grey" />
+          </TouchableOpacity>
+          {/*<View style={{ flex: 1,alignSelf:'center' }}>*/}
+          <View style={{ flex: 1 }}>
+            <TextInput
+              placeholder="Message"
+              placeholderTextColor="grey"
+              value={newMessage}
+              onChangeText={(t) => setnewMessage(t)}
+              style={styles.input} />
+          </View>
+          <TouchableOpacity onPress={sendMessage} style={styles.send}>
+            <Icon name="send-outline" size={27} color="white" />
+          </TouchableOpacity>
 
 
         </View>
@@ -494,7 +608,7 @@ const styles = StyleSheet.create({
     width: "80%",
     height: 60,
     borderRadius: 40,
-    bottom:-10,
+    bottom: -10,
     backgroundColor: "#324452",
   },
   emoji: {
@@ -526,40 +640,40 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    justifyContent: "center"
+    justifyContent: "center",
   },
   centeredView: {
-    flex:1,
+    flex: 1,
     // backgroundColor:'red',
-    justifyContent:'center',
-    alignItems:'center',
+    justifyContent: "center",
+    alignItems: "center",
 
 
   },
   modalView: {
 
-width:'80%',
+    width: "80%",
     backgroundColor: "#222D36",
     borderRadius: 10,
     marginHorizontal: 35,
-    padding:10,
-    paddingVertical:20,
-    justifyContent:'center',
+    padding: 10,
+    paddingVertical: 20,
+    justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   button: {
     borderRadius: 20,
     padding: 20,
     elevation: 2,
-    alignSelf:'flex-end'
+    alignSelf: "flex-end",
   },
   buttonOpen: {
     backgroundColor: "#F194FF",
@@ -570,15 +684,15 @@ width:'80%',
   textStyle: {
     color: "#00D789",
     fontWeight: "bold",
-    textAlign: "center"
+    textAlign: "center",
   },
   modalText: {
-    fontSize:20,
+    fontSize: 20,
     marginBottom: 15,
-    alignSelf:'flex-start',
+    alignSelf: "flex-start",
     textAlign: "left",
-    color:'white'
-  }
+    color: "white",
+  },
 });
 
 export default ChatMainScreen;

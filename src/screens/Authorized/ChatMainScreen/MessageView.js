@@ -5,11 +5,11 @@ import Icon from "react-native-vector-icons/Ionicons";
 import moment from 'moment';
 const MessageView = ({ message,onLongPress }) => {
 
-
   const uid = useSelector(state => state.user.token);
   let myid = message.sender === uid;
 
-  if(message?.deletedforMe?.includes(uid))
+  // console.log(message);
+  if(message?.deleted_for_me?.includes(uid))
   {
     return null
   }
@@ -20,22 +20,15 @@ const MessageView = ({ message,onLongPress }) => {
       backgroundColor: myid ? "#A0D995" : "grey",
       alignSelf: myid ? "flex-end" : "flex-start",
     }]}
-    onLongPress={()=>onLongPress(message?.id,message?.sender)}
+    onLongPress={()=>onLongPress(message?.message_id,message?.sender)}
     >
       {/*<Text> {message.sender}</Text>*/}
 
       {message.type === "image" && <Image source={{ uri: message?.image }} style={{ width: 200, height: 200 }} />}
-      {!message.deletedforAll ? <Text style={{ fontSize: 16 }}> {message?.text}</Text> : <Text>This message was deleted</Text>}
+      {!message.deleted_for_all ? <Text style={{ fontSize: 16 }}> {message?.text}</Text> : <Text>This message was deleted</Text>}
       <View style={{ flexDirection: "row", alignSelf: "flex-end" }}>
         <Text style={{ alignSelf: "flex-end" }}>
-          {/*{new Date(message.time.toDate().getTime()).toLocaleString("en-US",*/}
-          {/*  {*/}
-          {/*  hour: "numeric",*/}
-          {/*  minute: "numeric",*/}
-          {/*  hour12: true,*/}
-          {/*  })*/}
-          {/*}*/}
-          {moment(message.time.toDate()).format(" hh:mm A")}
+          {moment(message?.created_at).format("hh:mm A")}
         </Text>
         {!!myid && <Icon name="checkmark-done-outline" size={20} style={{ paddingLeft: 5 }}
                          color={message.seen ? "#3AB0FF" : "grey"} />}

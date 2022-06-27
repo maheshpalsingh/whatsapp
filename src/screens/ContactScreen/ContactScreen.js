@@ -19,24 +19,9 @@ const ContactScreen = ({ navigation }) => {
   const dispatch = useDispatch();
 
 
-  const uid1 = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.token);
 
-  useEffect(() => {
-    // database()
-    //   .ref(`/users/${uid1}`)
-    //   .once('value')
-    //   .then(snapshot => {
-    //     // console.log('User data: ', snapshot.val());
-    //   });
 
-    // firestore()
-    //   .collection("Users")
-    //   .doc(uid1)
-    //   .onSnapshot(res => {
-    //     //console.log('=======', res.data());
-    //   });
-
-  }, [uid1]);
 
   useEffect(() => {
     Contacts.getAll().then(contacts => {
@@ -121,7 +106,7 @@ const ContactScreen = ({ navigation }) => {
     // const isUser = cnoDB.current.includes(contactno);
     // // console.log("isUser", isUser,contactno);
     // if (isUser) {
-    //   // console.log('ID',uid1,uid2);
+    //   // console.log('ID',uid,uid2);
 
     firestore()
       .collection("Users")
@@ -147,46 +132,56 @@ const ContactScreen = ({ navigation }) => {
             });
 
 
-          let uid2 = d.id;
+          let otherUserId = d.id;
           const isUser = cnoDB.current.includes(contactno);
           if (isUser) {
             console.log("yes");
 
             firestore()
               .collection("Channels")
-              .doc(uid1 + uid2)
+              .doc(uid + otherUserId)
               .get()
               .then(querySnapshot => {
 
                 if (querySnapshot.data()) {
                   console.log('1');
                   console.log("already in", querySnapshot.data());
-                  navigation.navigate("ChatMainScreen", { item: obj, channelID: uid1 + uid2 });
+                  navigation.navigate("ChatMainScreen", { item: obj, channelID: uid + otherUserId });
                 } else {
 
                   firestore()
                     .collection("Channels")
-                    .doc(uid2 + uid1)
+                    .doc(otherUserId + uid)
                     .get()
                     .then(querySnapshot => {
                       console.log("query data==", querySnapshot.data());
                       if (querySnapshot.data()) {
                         //console.log("already in", querySnapshot.data());
-                        navigation.navigate("ChatMainScreen", { item: obj, channelID: uid2 + uid1 })
+                        navigation.navigate("ChatMainScreen", { item: obj, channelID: otherUserId + uid })
                       } else {
                         console.log('creating new channel');
                         firestore()
                           .collection("Channels")
-                          .doc(uid1 + uid2)
+                          .doc(uid + otherUserId)
                           .set(
                             {
-                              members: [uid1, uid2],
+                              members: [uid, otherUserId],
+                              created_at:new Date(),
+                              updated_at:new Date(),
+                              created_by: uid,
+                              sender_id:"",
+                              receiver_id:"",
+                              seen_by:false,
+                              last_message_type:"",
+                              last_message:"",
+                              message_id:""
+
                             },
                             { merge: true },
                           )
                           .then(() => {
                             console.log("Channel added!");
-                            navigation.navigate("ChatMainScreen", { item: obj, channelID: uid2 + uid1 });
+                            navigation.navigate("ChatMainScreen", { item: obj, channelID: otherUserId + uid });
                           })
                           .catch(e => {
                             console.log(e);
@@ -197,9 +192,9 @@ const ContactScreen = ({ navigation }) => {
 
 
                   //   database()
-                  //     .ref(`/channels/${uid1+uid2}`)
+                  //     .ref(`/channels/${uid+otherUserId}`)
                   //     .set({
-                  //       members:[uid1,uid2],
+                  //       members:[uid,otherUserId],
                   //       // messages:[
                   //       //  senderid,messages,messageid,time,date,
                   //       //   ],
