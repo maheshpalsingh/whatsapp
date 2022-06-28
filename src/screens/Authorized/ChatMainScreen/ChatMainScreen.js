@@ -50,6 +50,8 @@ const ChatMainScreen = ({ route }) => {
   const dispatch = useDispatch();
   let imageUrl = items.image;
 
+  const db=firestore().collection("Channels").doc(channelID)
+
   const getAllMessages = async () => {
     await dispatch(messageActions.readAllMessages(channelID));
   };
@@ -152,16 +154,10 @@ const ChatMainScreen = ({ route }) => {
   }, [items.id]);
 
 
-  // useEffect(()=>{
-  //   const last_ref = firestore().collection("Channels").doc(channelID/);
-  //   console.log(last_ref,'llllll');
-  // },[])
-
-
   const sendMessage = async () => {
     if (newMessage.trim().length > 0) {
-      const message_ref = firestore().collection("Channels").doc(channelID).collection("messages").doc();
-      const last_ref = firestore().collection("Channels").doc(channelID);
+      const message_ref = db.collection("messages").doc();
+
       const obj = {
         type: "text",
         sender: uid,
@@ -183,7 +179,7 @@ const ChatMainScreen = ({ route }) => {
         });
       });
 
-      last_ref.set({
+      db.set({
         updated_at: new Date(),
         sender_id: uid,
         receiver_id: otherUserId,
@@ -317,9 +313,7 @@ const ChatMainScreen = ({ route }) => {
     console.log("pressed", selectedID.current, messageSenderID.current, uid);
     if (selectedID.current && messageSenderID.current === uid) {
       console.log("1111", selectedID.current);
-      firestore()
-        .collection("Channels")
-        .doc(channelID)
+      db
         .collection("messages")
         .doc(selectedID.current)
         .set({
@@ -342,17 +336,23 @@ const ChatMainScreen = ({ route }) => {
             payload: { [channelID]: allmessages },
           });
 
+          db
+            .get()
+            .then((document) =>
+            {
+              const lastMessageid=document.data().message_id
+              if(lastMessageid===selectedID.current){
+                console.log('inin');
+                db
+                  .set({
+                    updated_at: new Date(),
+                    deleted_for_all: true
+                  },{merge:true}).then()
+              }
+            })
+
+
         });
-      // console.log('messsages',message);
-      // firestore()
-      //   .collection("Channels")
-      //   .doc(channelID)
-      //   .set({
-      //     updated_at: new Date(),
-      //     deleted_for_all: true,
-      //   }, {
-      //     merge: true,
-      //   }).then();
     }
   };
 
