@@ -153,8 +153,9 @@ const ChatMainScreen = ({ route }) => {
 
 
   // useEffect(()=>{
-  //   const last_ref = firestore().collection("Channels").doc(channelID/);
-  //   console.log(last_ref,'llllll');
+  //   const last_ref = firestore().collection("Channels").doc(channelID).get()
+  //     .then((document)=>console.log(document.data().message_id));
+  //   console.log('lllll',last_ref);
   // },[])
 
 
@@ -341,6 +342,22 @@ const ChatMainScreen = ({ route }) => {
             type: READ_MESSAGE,
             payload: { [channelID]: allmessages },
           });
+
+            const last_ref = firestore().collection("Channels").doc(channelID).get()
+              .then((document)=>console.log(document.data().message_id));
+          console.log('inin',last_ref,selectedID.current);
+            if(last_ref===selectedID.current)
+            {
+
+              firestore()
+                .collection("Channels")
+                .doc(channelID)
+                .set({
+                  updated_at: new Date(),
+                  deleted_for_all: true
+                },{merge:true}).then()
+            }
+
 
         });
       // console.log('messsages',message);
