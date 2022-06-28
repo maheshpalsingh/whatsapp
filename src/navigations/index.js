@@ -32,7 +32,7 @@ const NavIndex = () => {
     let rM=remoteMessage?.data
     // console.log('RRR',rM);
     if(rM){
-      let channelID=rM.channelid
+      let channelID=rM.channelID
       let image= rM.recieverid + ".jpg";
       let obj = {};
       obj.id = rM.recieverid;

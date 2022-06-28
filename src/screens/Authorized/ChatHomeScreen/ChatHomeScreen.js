@@ -13,7 +13,7 @@ const ChatHomeScreen = ({ navigation }) => {
 
   const [users, setUsers] = useState([]);
   const tmpUsers = useRef([]);
-  const [channelID, setChannelID] = useState();
+  const [channelID, setchannelID] = useState();
   const [userStatus, setStatus] = useState(false);
   const [userLastSeen, setLastSeen] = useState(false);
   const [lastmessage, setLastMessage] = useState([]);
@@ -132,7 +132,7 @@ const ChatHomeScreen = ({ navigation }) => {
       .then(querySnapshot => {
         querySnapshot.forEach(documentSnapshot => {
           if (documentSnapshot.id.includes(uid)) {
-            setChannelID(documentSnapshot.id);
+            setchannelID(documentSnapshot.id);
 
             firestore()
               .collection("Channels")

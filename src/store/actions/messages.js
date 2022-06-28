@@ -4,12 +4,12 @@ import  firestore  from "@react-native-firebase/firestore";
 export const READ_MESSAGE = 'READ_MESSAGE';
 export const SEND_MESSAGE = 'SEND_MESSAGE';
 
-export const readAllMessages = (channelid) => {
+export const readAllMessages = (channelID) => {
   return async (dispatch) => {
     try {
        firestore()
         .collection("Channels")
-        .doc(channelid)
+        .doc(channelID)
         .collection("messages")
          .orderBy("created_at", "desc")
          .limit(100)
@@ -27,7 +27,7 @@ export const readAllMessages = (channelid) => {
             }
             dispatch({
               type: READ_MESSAGE,
-              payload: {[channelid]:temp},
+              payload: {[channelID]:temp},
             });
         });
     } catch (e) {
@@ -36,13 +36,13 @@ export const readAllMessages = (channelid) => {
   };
 };
 
-export const readNewMessage=(channelid,lastVisible)=>{
+export const readNewMessage=(channelID,lastVisible)=>{
   return async (dispatch,getState) => {
     try {
-      const prevMessages= getState().message.messages[channelid] || []
+      const prevMessages= getState().message.messages[channelID] || []
       firestore()
         .collection("Channels")
-        .doc(channelid)
+        .doc(channelID)
         .collection("messages")
         .where('created_at','>',new Date(lastVisible))
         .limit(100)
@@ -62,7 +62,7 @@ export const readNewMessage=(channelid,lastVisible)=>{
           {
             dispatch({
               type: READ_MESSAGE,
-              payload: {[channelid]:[...prevMessages,...temp]},
+              payload: {[channelID]:[...prevMessages,...temp]},
             });
           }
 
@@ -75,13 +75,13 @@ export const readNewMessage=(channelid,lastVisible)=>{
 
 
 
-// export const sendMessage=(channelid,newMessage,uid)=>{
+// export const sendMessage=(channelID,newMessage,uid)=>{
 //   return async (dispatch,getState) => {
 //     try {
-//       const prevMessages= getState().message.messages[channelid] || []
+//       const prevMessages= getState().message.messages[channelID] || []
 //       firestore()
 //         .collection("Channels")
-//         .doc(channelid)
+//         .doc(channelID)
 //         .collection("messages")
 //         .doc()
 //         .set(
@@ -109,7 +109,7 @@ export const readNewMessage=(channelid,lastVisible)=>{
 //           {
 //             dispatch({
 //               type: SEND_MESSAGE,
-//               payload: {[channelid]:[...prevMessages,...temp]},
+//               payload: {[channelID]:[...prevMessages,...temp]},
 //             });
 //           }
 //

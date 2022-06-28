@@ -46,7 +46,7 @@ const ChatMainScreen = ({ route }) => {
   const getMessage = useSelector(state => state.message.messages[channelID]);
 
   const message = getMessage || [];
-  // console.log("message",message[0]);
+  //console.log("message",message);
   const dispatch = useDispatch();
   let imageUrl = items.image;
 
@@ -152,6 +152,12 @@ const ChatMainScreen = ({ route }) => {
   }, [items.id]);
 
 
+  // useEffect(()=>{
+  //   const last_ref = firestore().collection("Channels").doc(channelID/);
+  //   console.log(last_ref,'llllll');
+  // },[])
+
+
   const sendMessage = async () => {
     if (newMessage.trim().length > 0) {
       const message_ref = firestore().collection("Channels").doc(channelID).collection("messages").doc();
@@ -189,7 +195,7 @@ const ChatMainScreen = ({ route }) => {
 
 
       await axios.post("http://127.0.0.1:3000/sendmessages", {
-        channelid: channelID,
+        channelID: channelID,
         senderid: uid,
         text: newMessage,
         recieverid: otherUserId,
@@ -218,7 +224,7 @@ const ChatMainScreen = ({ route }) => {
     //       //call notification
     //       axios
     //         .post("http://127.0.0.1:3000/sendmessages", {
-    //           channelid: channelID,
+    //           channelID: channelID,
     //           senderid: uid,
     //           text: newMessage,
     //           recieverid: otherUserId,
@@ -310,7 +316,7 @@ const ChatMainScreen = ({ route }) => {
     setModalVisible(!modalVisible);
     console.log("pressed", selectedID.current, messageSenderID.current, uid);
     if (selectedID.current && messageSenderID.current === uid) {
-      console.log("1111",selectedID.current);
+      console.log("1111", selectedID.current);
       firestore()
         .collection("Channels")
         .doc(channelID)
@@ -326,19 +332,16 @@ const ChatMainScreen = ({ route }) => {
 
           console.log("message deleted!");
 
-          // console.log(message.includes(selectedID.current),'111111')
-          let obj = message.find(o => o.message_id === selectedID.current);
+          const allmessages = [...message];
 
-          let obj1={...message,deleted_for_all:obj.deleted_for_all(true)}
+          let index = allmessages.findIndex(o => o.message_id === selectedID.current);
+          let obj1 = { ...allmessages[index], updated_at: new Date(), deleted_for_all: true };
+          allmessages[index] = obj1;
+          dispatch({
+            type: READ_MESSAGE,
+            payload: { [channelID]: allmessages },
+          });
 
-            dispatch({
-              type: READ_MESSAGE,
-              payload: {[channelID]:[...message,...obj1]},
-            });
-
-
-          // const updatemessage={...message,message:message[obj.message_id]}
-          // console.log('idid',obj.message_id);
         });
       // console.log('messsages',message);
       // firestore()
@@ -519,8 +522,6 @@ const ChatMainScreen = ({ route }) => {
 
 
         <View style={{ flex: 1 }}>
-
-
           <Image source={{ uri: bg }}
                  style={StyleSheet.absoluteFillObject} />
           <FlatList
