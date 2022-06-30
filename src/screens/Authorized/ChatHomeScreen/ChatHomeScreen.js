@@ -1,16 +1,24 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, Image, FlatList, AppState, StatusBar } from "react-native";
-import Icons from "react-native-vector-icons/Ionicons";
+import React, {useEffect, useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  AppState,
+  StatusBar,
+} from 'react-native';
+import Icons from 'react-native-vector-icons/Ionicons';
 
-import ChatView from "./ChatView";
-import database from "@react-native-firebase/database";
-import firestore from "@react-native-firebase/firestore";
-import { useDispatch, useSelector } from "react-redux";
-import storage, { firebase } from "@react-native-firebase/storage";
-import { setToken } from "../../../store/actions/users";
+import ChatView from './ChatView';
+import database from '@react-native-firebase/database';
+import firestore from '@react-native-firebase/firestore';
+import {useDispatch, useSelector} from 'react-redux';
+import storage, {firebase} from '@react-native-firebase/storage';
+import {setToken} from '../../../store/actions/users';
+import * as messageActions from '../../../store/actions/messages';
 
-const ChatHomeScreen = ({ navigation }) => {
-
+const ChatHomeScreen = ({navigation}) => {
   const [users, setUsers] = useState([]);
   const tmpUsers = useRef([]);
   const [channelID, setchannelID] = useState();
@@ -18,13 +26,19 @@ const ChatHomeScreen = ({ navigation }) => {
   const [userLastSeen, setLastSeen] = useState(false);
   const [lastmessage, setLastMessage] = useState([]);
   const [myFCM, setFCM] = useState();
+  const getLastMessage = useSelector(
+    state => state?.message?.lastmessage[channelID],
+  );
   const uid = useSelector(state => state.user.token);
+  const dispatch = useDispatch();
 
-//fcm token
+  // console.log('kkkk', getLastMessage);
+  const lastMessage = getLastMessage || [];
+
+  //fcm token
   useEffect(() => {
-
     firestore()
-      .collection("Users")
+      .collection('Users')
       .doc(uid)
       .get()
       .then(documentSnapshot => {
@@ -34,56 +48,50 @@ const ChatHomeScreen = ({ navigation }) => {
             .getToken(firebase.app().options.messagingSenderId)
             .then(x => {
               // console.log(x)
-              if (documentSnapshot.data().fcm ) {
-                let check=documentSnapshot.data().fcm.includes(x)
-                  if(!check)
-                  {
-                    if(documentSnapshot.data().fcm.length===3)
-                    {
-                      let final= documentSnapshot.data().fcm.slice(-2).concat(x)
-                      firestore()
-                        .collection("Users")
-                        .doc(uid)
-                        .set({ fcm: final}, { merge: true })
-                        .then(() => {});
-                    }
-                  else {
-                      let final= documentSnapshot.data().fcm.concat(x)
-                      firestore()
-                        .collection("Users")
-                        .doc(uid)
-                        .set({ fcm: final}, { merge: true })
-                        .then(() => {});
-                    }
+              if (documentSnapshot.data().fcm) {
+                let check = documentSnapshot.data().fcm.includes(x);
+                if (!check) {
+                  if (documentSnapshot.data().fcm.length === 3) {
+                    let final = documentSnapshot.data().fcm.slice(-2).concat(x);
+                    firestore()
+                      .collection('Users')
+                      .doc(uid)
+                      .set({fcm: final}, {merge: true})
+                      .then(() => {});
+                  } else {
+                    let final = documentSnapshot.data().fcm.concat(x);
+                    firestore()
+                      .collection('Users')
+                      .doc(uid)
+                      .set({fcm: final}, {merge: true})
+                      .then(() => {});
                   }
-
+                }
               } else {
-                console.log("setting fcm");
-                  firestore()
-                    .collection("Users")
-                    .doc(uid)
-                    .set({ fcm: [x] }, { merge: true })
-                    .then(() => {});
+                console.log('setting fcm');
+                firestore()
+                  .collection('Users')
+                  .doc(uid)
+                  .set({fcm: [x]}, {merge: true})
+                  .then(() => {});
               }
             })
             .catch(e => console.log(e));
         }
-
       });
-
   }, [uid]);
 
-//app state
+  //app state
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", nextAppState => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
       const reference = database().ref(`/online/${uid}`);
-      if (nextAppState === "active") {
+      if (nextAppState === 'active') {
         //console.log("online");
         reference
           .update({
             isActive: true,
           })
-          .then(() => console.log("active"));
+          .then(() => console.log('active'));
       } else {
         //console.log("offline");
         reference
@@ -91,18 +99,20 @@ const ChatHomeScreen = ({ navigation }) => {
             isActive: false,
             lastSeen: Date(),
           })
-          .then(() => console.log("inactive"));
+          .then(() => console.log('inactive'));
       }
-      reference.onDisconnect().update({
-        isActive: false,
-        lastSeen: Date(),
-      }).then(() => console.log("On disconnect function configured."));
+      reference
+        .onDisconnect()
+        .update({
+          isActive: false,
+          lastSeen: Date(),
+        })
+        .then(() => console.log('On disconnect function configured.'));
     });
     return () => {
       subscription.remove();
     };
   }, [uid]);
-
 
   // useEffect(() => {
   //   // database()
@@ -124,10 +134,9 @@ const ChatHomeScreen = ({ navigation }) => {
   //     });
   //   }, []);
 
-
   useEffect(() => {
     firestore()
-      .collection("Channels")
+      .collection('Channels')
       .get()
       .then(querySnapshot => {
         querySnapshot.forEach(documentSnapshot => {
@@ -135,25 +144,24 @@ const ChatHomeScreen = ({ navigation }) => {
             setchannelID(documentSnapshot.id);
 
             firestore()
-              .collection("Channels")
+              .collection('Channels')
               .doc(documentSnapshot.id)
-              .collection("messages")
-              .orderBy("time", "desc")
-              .limit(1)
-              .onSnapshot(snapshot => snapshot.docChanges().forEach(
-                change => {
-                  setLastMessage(change.doc.data());
-                },
-              ));
+              .onSnapshot(documentSnapshot => {
+                if (documentSnapshot) {
+                  const data = documentSnapshot.data();
+                  //console.log('dtdt', data);
+                  setLastMessage(data);
+                }
+              });
 
-            let otherUserId = documentSnapshot.id.replace(uid, "");
+            let otherUserId = documentSnapshot.id.replace(uid, '');
             firestore()
-              .collection("Users")
+              .collection('Users')
               .doc(otherUserId)
               .get()
               .then(documentSnapshot => {
                 if (documentSnapshot.exists) {
-                  let image = otherUserId + ".jpg";
+                  let image = otherUserId + '.jpg';
                   let obj = {};
 
                   obj.id = otherUserId;
@@ -168,12 +176,12 @@ const ChatHomeScreen = ({ navigation }) => {
                       setUsers(tmpUsers.current);
                     })
                     .catch(e => {
-                      console.log("error", e);
+                      console.log('error', e);
                     });
 
                   database()
                     .ref(`/online/${otherUserId}`)
-                    .on("value", snapshot => {
+                    .on('value', snapshot => {
                       //console.log('User data: ', snapshot.val());
                       setStatus(snapshot.val()?.isActive);
                       setLastSeen(snapshot.val()?.lastSeen);
@@ -181,49 +189,76 @@ const ChatHomeScreen = ({ navigation }) => {
                 }
               });
           }
+          // const getLastMessages = () => {
+          //   dispatch(messageActions.readLastMessage(documentSnapshot.id));
+          // };
+
+          // getLastMessages();
+          // setLastMessage(lastMessage);
         });
       });
-
   }, []);
 
-
   const startConversation = () => {
-    navigation.navigate("ContactScreen");
+    navigation.navigate('ContactScreen');
   };
-
 
   const keyExtractor = (item, idx) => {
     // console.log(item);
     return item?.recordID?.toString() || idx.toString();
   };
-  const renderItem = ({ item, index }) => {
-
-    return <ChatView contact={item} userstatus={userStatus} lastseen={userLastSeen} mess={lastmessage} onPress={() => {
-      // navigation.navigate("ChatMainScreen", { item, channelID,userLastSeen,userStatus });
-      navigation.navigate("ChatMainScreen", { item, channelID });
-    }} />;
+  const renderItem = ({item, index}) => {
+    return (
+      <ChatView
+        contact={item}
+        userstatus={userStatus}
+        lastseen={userLastSeen}
+        mess={lastmessage}
+        onPress={() => {
+          // navigation.navigate("ChatMainScreen", { item, channelID,userLastSeen,userStatus });
+          navigation.navigate('ChatMainScreen', {item, channelID});
+        }}
+      />
+    );
   };
 
   return (
-    <View style={{ backgroundColor: "#101D24", flexGrow: 1 }}>
-      <StatusBar barStyle="light-content" backgroundColor='#101D24'  />
-      {users.length !== 0 && <FlatList
-        data={users}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        style={{ flex: 1 }}
-      />}
+    <View style={{backgroundColor: '#101D24', flexGrow: 1}}>
+      <StatusBar barStyle="light-content" backgroundColor="#101D24" />
+      {users.length !== 0 && (
+        <FlatList
+          data={users}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          style={{flex: 1}}
+        />
+      )}
 
-
-      <View style={{ width: 80, height: 80, position: "absolute", bottom: 50, right: 30 }}>
-        <TouchableOpacity style={{ flex:1, backgroundColor: "#00D789", height: "100%", borderRadius: 100,justifyContent:'center' }}
-                          onPress={startConversation}
-        >
-          <Image source={require("../../../assets/imageUI/mdi_android-messages.png")}
-                 style={{ alignSelf:'center' }} />
+      <View
+        style={{
+          width: 80,
+          height: 80,
+          position: 'absolute',
+          bottom: 50,
+          right: 30,
+        }}>
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: '#00D789',
+            height: '100%',
+            borderRadius: 100,
+            justifyContent: 'center',
+          }}
+          onPress={startConversation}>
+          <Image
+            source={require('../../../assets/imageUI/mdi_android-messages.png')}
+            style={{alignSelf: 'center'}}
+          />
         </TouchableOpacity>
       </View>
-    </View>);
+    </View>
+  );
 };
 
 export default ChatHomeScreen;
