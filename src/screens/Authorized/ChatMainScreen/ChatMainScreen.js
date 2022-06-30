@@ -61,6 +61,8 @@ const ChatMainScreen = ({route}) => {
   const dispatch = useDispatch();
   let imageUrl = items.image;
 
+  const db = firestore().collection('Channels').doc(channelID);
+
   const getAllMessages = async () => {
     dispatch(messageActions.readAllMessages(channelID));
   };
@@ -426,16 +428,6 @@ const ChatMainScreen = ({route}) => {
               .then();
           }
         });
-      // console.log('messsages',message);
-      // firestore()
-      //   .collection("Channels")
-      //   .doc(channelID)
-      //   .set({
-      //     updated_at: new Date(),
-      //     deleted_for_all: true,
-      //   }, {
-      //     merge: true,
-      //   }).then();
     }
   };
 
