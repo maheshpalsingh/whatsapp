@@ -41,34 +41,34 @@ const ChatMainScreen = ({route}) => {
   const messageSenderID = useRef();
   const flatlistRef = useRef();
   const uid = useSelector(state => state.user.token);
-  const items = route?.params?.item;
-  const channelID = route?.params?.channelID;
-  const otherUserId = channelID.replace(uid, '');
-  //console.log(userLastSeen,userStatus,'2');
+  const channelDetails = route?.params?.item;
+
   // const [message, setMessage] = useState([]);
   const [newMessage, setnewMessage] = useState('');
-  const getMessage = useSelector(state => state.message.messages[channelID]);
+  const getMessage = useSelector(
+    state => state.message.messages[channelDetails?.id],
+  );
 
   const subscriber = useRef();
-
+  // console.log('12121', getMessage);
   const message = getMessage || [];
-  const channelRef = firestore().collection('Channels').doc(channelID);
-  const last_ref = channelRef
-    .get()
-    .then(document => document.data().message_id);
+  const channelRef = firestore().collection('Channels').doc(channelDetails?.id);
 
   //console.log("message",message);
   const dispatch = useDispatch();
-  let imageUrl = items.image;
+  const reciever = channelDetails?.members.filter(myid => myid !== uid);
+  const recieverid = reciever.toString();
+  const recieverName = channelDetails?.users_details?.[recieverid].name;
+  const recieverProfile = channelDetails?.users_details?.[recieverid].profile;
 
-  const db = firestore().collection('Channels').doc(channelID);
+  const db = firestore().collection('Channels').doc(channelDetails?.id);
 
   const getAllMessages = async () => {
-    dispatch(messageActions.readAllMessages(channelID));
+    dispatch(messageActions.readAllMessages(channelDetails?.id));
   };
   const lastVisible = message[0]?.created_at;
   const getNewMessage = async () => {
-    dispatch(messageActions.readNewMessage(channelID, lastVisible));
+    dispatch(messageActions.readNewMessage(channelDetails?.id, lastVisible));
   };
 
   useEffect(() => {
@@ -79,11 +79,44 @@ const ChatMainScreen = ({route}) => {
       console.log('update');
       getNewMessage().then();
     }
-  }, [channelID]);
+  }, [channelDetails?.id]);
+
+  useEffect(() => {
+    // console.log('messaghe', message);
+    const messageids = message.filter(
+      item => item.sender !== uid && !item.seen,
+    );
+
+    messageids.forEach(item => {
+      firestore()
+        .collection(`Channels/${channelDetails?.id}/messages`)
+        .doc(item.message_id)
+        .set(
+          {
+            seen: true,
+            updated_at: new Date(),
+          },
+          {
+            merge: true,
+          },
+        )
+        .then(() => {
+          channelRef.set(
+            {
+              updated_at: new Date(),
+              last_message_seen: true,
+            },
+            {
+              merge: true,
+            },
+          );
+        });
+    });
+  }, [message]);
 
   useEffect(() => {
     database()
-      .ref(`/online/${items.id}`)
+      .ref(`/online/${recieverid}`)
       .on('value', snapshot => {
         // console.log('1111User data: ', snapshot.val());
         setStatus(snapshot.val()?.isActive);
@@ -174,53 +207,53 @@ const ChatMainScreen = ({route}) => {
           if (change.type === 'added') {
             const messageId = change.doc.id;
             const data = change.doc.data();
-            if (data.sender !== uid) {
-              const matchIndex = message.findIndex(
-                item => item.message_id === messageId,
-              );
+            // if (data.sender !== uid) {
+            const matchIndex = message.findIndex(
+              item => item.message_id === messageId,
+            );
 
-              if (matchIndex >= 0) {
-                const allmessages = [...message];
-                let obj1 = {
-                  ...data,
-                  created_at: data?.created_at?.toDate(),
-                  updated_at: data?.updated_at?.toDate(),
-                  message_id: messageId,
-                };
-                allmessages[matchIndex] = obj1;
-                dispatch({
-                  type: READ_MESSAGE,
-                  payload: {[channelID]: allmessages},
-                });
-              } else {
-                const finalData = {
-                  ...data,
-                  created_at: data?.created_at?.toDate(),
-                  updated_at: data?.updated_at?.toDate(),
-                };
-                // console.log('final data', finalData);
+            if (matchIndex >= 0) {
+              const allmessages = [...message];
+              let obj1 = {
+                ...data,
+                created_at: data?.created_at?.toDate(),
+                updated_at: data?.updated_at?.toDate(),
+                message_id: messageId,
+              };
+              allmessages[matchIndex] = obj1;
+              dispatch({
+                type: READ_MESSAGE,
+                payload: {[channelDetails?.id]: allmessages},
+              });
+            } else {
+              const finalData = {
+                ...data,
+                created_at: data?.created_at?.toDate(),
+                updated_at: data?.updated_at?.toDate(),
+              };
+              // console.log('final data', finalData);
 
-                const details = [
-                  {...finalData, message_id: messageId},
-                  ...message,
-                ];
-                // console.log('Detailsss', details);
-                dispatch({
-                  type: READ_MESSAGE,
-                  payload: {
-                    [channelID]: details,
-                  },
-                });
-              }
+              const details = [
+                {...finalData, message_id: messageId},
+                ...message,
+              ];
+              // console.log('Detailsss', details);
+              dispatch({
+                type: READ_MESSAGE,
+                payload: {
+                  [channelDetails?.id]: details,
+                },
+              });
             }
           }
+          // }
         }),
       );
 
     return () => subscriber.current && subscriber.current();
   }, [message]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (newMessage.trim().length > 0) {
       const message_ref = channelRef.collection('messages').doc();
 
@@ -237,29 +270,38 @@ const ChatMainScreen = ({route}) => {
         dispatch({
           type: READ_MESSAGE,
           payload: {
-            [channelID]: [{message_id: message_ref.id, ...obj}, ...message],
+            [channelDetails?.id]: [
+              {message_id: message_ref.id, ...obj},
+              ...message,
+            ],
           },
         });
       });
 
-      channelRef.set({
-        updated_at: new Date(),
-        sender_id: uid,
-        receiver_id: otherUserId,
-        seen_by: false,
-        last_message_type: 'text',
-        last_message: newMessage,
-        message_id: message_ref.id,
-      });
+      channelRef.set(
+        {
+          updated_at: new Date(),
+          sender_id: uid,
+          receiver_id: recieverid,
+          seen: false,
+          last_message_type: 'text',
+          last_message: newMessage,
+          last_message_seen: false,
+          message_id: message_ref.id,
+        },
+        {
+          merge: true,
+        },
+      );
 
       setnewMessage('');
 
-      // await axios.post('http://127.0.0.1:3000/sendmessages', {
-      //   channelID: channelID,
-      //   senderid: uid,
-      //   text: newMessage,
-      //   recieverid: otherUserId,
-      // });
+      await axios.post('http://127.0.0.1:3000/sendmessages', {
+        channelID: channelDetails?.id,
+        senderid: uid,
+        text: newMessage,
+        recieverid: recieverid,
+      });
     }
     // if (newMessage.trim().length > 0) {
     //   firestore()
@@ -358,9 +400,11 @@ const ChatMainScreen = ({route}) => {
           allmessages[index] = obj1;
           dispatch({
             type: READ_MESSAGE,
-            payload: {[channelID]: allmessages},
+            payload: {[channelDetails?.id]: allmessages},
           });
-
+          const last_ref = channelRef
+            .get()
+            .then(document => document.data().message_id);
           if (last_ref === selectedID.current) {
             channelRef
               .set(
@@ -410,12 +454,15 @@ const ChatMainScreen = ({route}) => {
           allmessages[index] = obj1;
           dispatch({
             type: READ_MESSAGE,
-            payload: {[channelID]: allmessages},
+            payload: {[channelDetails?.id]: allmessages},
           });
 
           // console.log('ooooo', message);
 
           // console.log('inin', last_ref, selectedID.current);
+          const last_ref = channelRef
+            .get()
+            .then(document => document.data().message_id);
           if (last_ref === selectedID.current) {
             channelRef
               .set(
@@ -470,12 +517,14 @@ const ChatMainScreen = ({route}) => {
 
         let m1 = new Date();
         storage()
-          .ref(`messages/${channelID}/${m1}.jpg`)
+          .ref(`messages/${channelDetails?.id}/${m1}.jpg`)
           .putFile(source, {
             cacheControl: 'no-store', // disable caching
           })
           .then(res => {
-            const picRef = storage().ref(`messages/${channelID}/${m1}.jpg`);
+            const picRef = storage().ref(
+              `messages/${channelDetails?.id}/${m1}.jpg`,
+            );
             picRef
               .getDownloadURL()
               .then(url => {
@@ -555,7 +604,8 @@ const ChatMainScreen = ({route}) => {
       )}
       <KeyboardAvoidingView behavior={'padding'} style={{flex: 1}}>
         {/*Header*/}
-        <View
+        <TouchableOpacity
+          onPress={() => navigation.navigate('UserDetail', {recieverid})}
           style={{
             flexDirection: 'row',
             backgroundColor: '#222D36',
@@ -563,17 +613,17 @@ const ChatMainScreen = ({route}) => {
           }}>
           <View style={{flexDirection: 'row'}}>
             <TouchableOpacity
-              style={{justifyContent: 'center', alignItems: 'center'}}
+              style={{justifyContent: 'center', alignchannelDetails: 'center'}}
               onPress={() => navigation.navigate('Home')}>
               <Icon name="arrow-back-outline" size={30} color="#fff" />
             </TouchableOpacity>
 
             <View style={styles.placeholder}>
-              {imageUrl === '' ? (
-                <Text style={styles.txt}>{items.name[0]}</Text>
+              {recieverProfile === '' ? (
+                <Text style={styles.txt}>{recieverName[0]}</Text>
               ) : (
                 <Image
-                  source={{uri: imageUrl}}
+                  source={{uri: recieverProfile}}
                   style={{width: '100%', height: '100%'}}
                 />
               )}
@@ -581,7 +631,7 @@ const ChatMainScreen = ({route}) => {
           </View>
 
           <View style={styles.contactDat}>
-            <Text style={styles.name}>{items?.name}</Text>
+            <Text style={styles.name}>{recieverName}</Text>
             {!!userStatus ? (
               <Text style={{color: '#fff', marginTop: 5}}>Online</Text>
             ) : (
@@ -592,7 +642,7 @@ const ChatMainScreen = ({route}) => {
                 }}>{`last seen at ${userLastSeen}`}</Text>
             )}
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={{flex: 1}}>
           <Image source={{uri: bg}} style={StyleSheet.absoluteFillObject} />
@@ -626,7 +676,12 @@ const ChatMainScreen = ({route}) => {
             />
           </View>
           <TouchableOpacity onPress={sendMessage} style={styles.send}>
-            <Icon name="send-outline" size={27} color="white" />
+            <Icon
+              name="send-outline"
+              size={27}
+              color="white"
+              style={{alignSelf: 'center'}}
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -649,7 +704,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     overflow: 'hidden',
     //backgroundColor: '#101D24',
-    alignItems: 'center',
+    alignchannelDetails: 'center',
     justifyContent: 'center',
   },
   contactDat: {
@@ -678,7 +733,7 @@ const styles = StyleSheet.create({
   },
   emoji: {
     justifyContent: 'center',
-    alignItems: 'center',
+    alignchannelDetails: 'center',
     width: '15%',
     height: '100%',
     marginLeft: 10,
@@ -695,7 +750,7 @@ const styles = StyleSheet.create({
   send: {
     marginTop: 2,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignchannelDetails: 'center',
     width: '16%',
     height: '85%',
     backgroundColor: '#00D789',
@@ -710,7 +765,7 @@ const styles = StyleSheet.create({
     flex: 1,
     // backgroundColor:'red',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignchannelDetails: 'center',
   },
   modalView: {
     width: '80%',
@@ -720,7 +775,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingVertical: 20,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignchannelDetails: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -764,13 +819,13 @@ export default ChatMainScreen;
 //     <View style={{ flexDirection: "row", backgroundColor: "#222D36", padding: 10 }}>
 //       <View style={styles.placeholder}>
 //         {
-//           imageUrl === "" ? <Text style={styles.txt}>{items.name[0]}</Text> :
+//           imageUrl === "" ? <Text style={styles.txt}>{channelDetails.name[0]}</Text> :
 //             <Image source={{ uri: imageUrl }} style={{ width: "100%", height: "100%" }} />
 //         }
 //       </View>
 //       <View style={styles.contactDat}>
 //         <Text style={styles.name}>
-//           {items?.name}
+//           {channelDetails?.name}
 //         </Text>
 //       </View>
 //     </View>
@@ -783,7 +838,7 @@ export default ChatMainScreen;
 //     >
 //       <View style={{
 //         justifyContent: "center",
-//         alignItems: "center",
+//         alignchannelDetails: "center",
 //         width: "15%",
 //         height: "100%",
 //         marginHorizontal: 10,
@@ -798,7 +853,7 @@ export default ChatMainScreen;
 //       <View
 //         style={{
 //           justifyContent: "center",
-//           alignItems: "center",
+//           alignchannelDetails: "center",
 //           width: "15%",
 //           backgroundColor: "#00D789",
 //           left: 60,

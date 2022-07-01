@@ -6,8 +6,8 @@ import {useDispatch, useSelector} from 'react-redux';
 import {setMyDetails, setToken} from '../../../store/actions/users';
 import database from '@react-native-firebase/database';
 const Settings = () => {
-  const uid = useSelector(state => state.user.token);
-  const mydetails = useSelector(state => state.user.mydetails);
+  const uid = useSelector(state => state?.user?.token);
+  const mydetails = useSelector(state => state?.user?.mydetails);
   console.log('mydetails', mydetails);
   const dispatch = useDispatch();
 
@@ -42,7 +42,7 @@ const Settings = () => {
           />
         </View>
         <View style={styles.details}>
-          <Text style={styles.name}>{mydetails.name}</Text>
+          <Text style={styles.name}>{mydetails?.name}</Text>
           <Text style={styles.status}>Available</Text>
         </View>
       </TouchableOpacity>

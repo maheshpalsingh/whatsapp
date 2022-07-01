@@ -18,6 +18,7 @@ const ContactScreen = ({navigation}) => {
   const dispatch = useDispatch();
 
   const uid = useSelector(state => state.user.token);
+  const mydetails = useSelector(state => state.user.mydetails);
 
   useEffect(() => {
     Contacts.getAll()
@@ -124,6 +125,7 @@ const ContactScreen = ({navigation}) => {
               obj.image = res;
 
               let otherUserId = d.id;
+
               const isUser = cnoDB.current.includes(contactno);
               if (isUser) {
                 console.log('yes');
@@ -134,7 +136,7 @@ const ContactScreen = ({navigation}) => {
                   .get()
                   .then(querySnapshot => {
                     if (querySnapshot.data()) {
-                      console.log('1');
+                      console.log('1q');
                       console.log('already in', obj);
                       navigation.navigate('ChatMainScreen', {
                         item: obj,
@@ -146,7 +148,7 @@ const ContactScreen = ({navigation}) => {
                         .doc(otherUserId + uid)
                         .get()
                         .then(querySnapshot => {
-                          console.log('query data==', querySnapshot.data());
+                          //console.log('query data==', querySnapshot.data());
                           if (querySnapshot.data()) {
                             console.log('already in123', obj);
                             navigation.navigate('ChatMainScreen', {
@@ -155,33 +157,65 @@ const ContactScreen = ({navigation}) => {
                             });
                           } else {
                             console.log('creating new channel');
+
+                            let obj1 = {};
                             firestore()
-                              .collection('Channels')
-                              .doc(uid + otherUserId)
-                              .set(
-                                {
-                                  members: [uid, otherUserId],
-                                  created_at: new Date(),
-                                  updated_at: new Date(),
-                                  created_by: uid,
-                                  sender_id: '',
-                                  receiver_id: '',
-                                  seen_by: false,
-                                  last_message_type: '',
-                                  last_message: '',
-                                  message_id: '',
-                                },
-                                {merge: true},
-                              )
-                              .then(() => {
-                                console.log('Channel added!');
-                                navigation.navigate('ChatMainScreen', {
-                                  item: obj,
-                                  channelID: otherUserId + uid,
-                                });
-                              })
-                              .catch(e => {
-                                console.log(e);
+                              .collection('Users')
+                              .doc(otherUserId)
+                              .get()
+                              .then(documentSnapshot => {
+                                if (documentSnapshot.exists) {
+                                  obj1.name = documentSnapshot.data().name;
+                                  storage()
+                                    .ref(`${uid}.jpg`)
+                                    .getDownloadURL()
+                                    .then(res => {
+                                      obj1.profile = res;
+
+                                      firestore()
+                                        .collection('Channels')
+                                        .doc(uid + otherUserId)
+                                        .set(
+                                          {
+                                            members: [uid, otherUserId],
+                                            created_at: new Date(),
+                                            updated_at: new Date(),
+                                            created_by: uid,
+                                            sender_id: '',
+                                            receiver_id: '',
+                                            seen: false,
+                                            last_message_type: '',
+                                            last_message: '',
+                                            last_message_seen: false,
+                                            message_id: '',
+                                            users_details: {
+                                              [uid]: {
+                                                name: mydetails?.name,
+                                                profile: mydetails?.image_url,
+                                              },
+                                              [otherUserId]: {
+                                                name: obj1.name,
+                                                profile: obj1.profile,
+                                              },
+                                            },
+                                          },
+                                          {merge: true},
+                                        )
+                                        .then(() => {
+                                          console.log('Channel added!');
+                                          navigation.navigate(
+                                            'ChatMainScreen',
+                                            {
+                                              item: obj,
+                                              channelID: otherUserId + uid,
+                                            },
+                                          );
+                                        })
+                                        .catch(e => {
+                                          console.log(e);
+                                        });
+                                    });
+                                }
                               });
                           }
                         });

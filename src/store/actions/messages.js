@@ -45,7 +45,7 @@ export const readNewMessage = (channelID, lastVisible) => {
   return async (dispatch, getState) => {
     try {
       const prevMessages = getState().message.messages[channelID] || [];
-      let allmessages = [];
+      var allmessages = [];
       firestore()
         .collection('Channels')
         .doc(channelID)
@@ -58,8 +58,10 @@ export const readNewMessage = (channelID, lastVisible) => {
 
           if (!documentSnapshot.empty) {
             allmessages = [...prevMessages];
+
             documentSnapshot.docs.forEach(doc => {
               const data = doc.data();
+              console.log('1q', data);
               const messageId = doc.id;
               let create_at = data?.created_at?.toDate();
               let updated_at = data?.updated_at?.toDate();
@@ -67,7 +69,7 @@ export const readNewMessage = (channelID, lastVisible) => {
               const matchIndex = prevMessages.findIndex(
                 item => item.message_id === messageId,
               );
-
+              // console.log('index', matchIndex);
               if (matchIndex >= 0) {
                 const allmessages = [...prevMessages];
                 let obj1 = {
@@ -76,6 +78,7 @@ export const readNewMessage = (channelID, lastVisible) => {
                   updated_at: updated_at,
                   message_id: messageId,
                 };
+                // console.log('oibk', obj1);
                 allmessages[matchIndex] = obj1;
               } else {
                 let obj1 = {

@@ -19,7 +19,7 @@ import {setToken} from '../../../store/actions/users';
 import * as messageActions from '../../../store/actions/messages';
 
 const ChatHomeScreen = ({navigation}) => {
-  const [users, setUsers] = useState([]);
+  const [channelDetails, setChannelDetails] = useState([]);
   const tmpUsers = useRef([]);
   const [channelID, setchannelID] = useState();
   const [userStatus, setStatus] = useState(false);
@@ -137,66 +137,88 @@ const ChatHomeScreen = ({navigation}) => {
   useEffect(() => {
     firestore()
       .collection('Channels')
-      .get()
-      .then(querySnapshot => {
-        querySnapshot.forEach(documentSnapshot => {
-          if (documentSnapshot.id.includes(uid)) {
-            setchannelID(documentSnapshot.id);
-
-            firestore()
-              .collection('Channels')
-              .doc(documentSnapshot.id)
-              .onSnapshot(documentSnapshot => {
-                if (documentSnapshot) {
-                  const data = documentSnapshot.data();
-                  //console.log('dtdt', data);
-                  setLastMessage(data);
-                }
-              });
-
-            let otherUserId = documentSnapshot.id.replace(uid, '');
-            firestore()
-              .collection('Users')
-              .doc(otherUserId)
-              .get()
-              .then(documentSnapshot => {
-                if (documentSnapshot.exists) {
-                  let image = otherUserId + '.jpg';
-                  let obj = {};
-
-                  obj.id = otherUserId;
-                  obj.name = documentSnapshot.data().name;
-                  obj.phone = documentSnapshot.data().phone;
-                  storage()
-                    .ref(image)
-                    .getDownloadURL()
-                    .then(res => {
-                      obj.image = res;
-                      tmpUsers.current.push(obj);
-                      setUsers(tmpUsers.current);
-                    })
-                    .catch(e => {
-                      console.log('error', e);
-                    });
-
-                  database()
-                    .ref(`/online/${otherUserId}`)
-                    .on('value', snapshot => {
-                      //console.log('User data: ', snapshot.val());
-                      setStatus(snapshot.val()?.isActive);
-                      setLastSeen(snapshot.val()?.lastSeen);
-                    });
-                }
-              });
+      .where('members', 'array-contains-any', [uid])
+      // .orderBy('updated_at', 'desc')
+      .onSnapshot(documentSnapshot => {
+        // console.log('documen', documentSnapshot);
+        if (!documentSnapshot?.empty) {
+          const temp = [];
+          documentSnapshot?.docs.forEach(doc => {
+            const data = doc.data();
+            const obj = {
+              id: doc.id,
+              ...data,
+              created_at: data?.created_at?.toDate(),
+              updated_at: data?.updated_at?.toDate(),
+            };
+            temp.push(obj);
+          });
+          // console.log('mychannels', temp);
+          if (temp.length) {
+            setChannelDetails(temp);
           }
-          // const getLastMessages = () => {
-          //   dispatch(messageActions.readLastMessage(documentSnapshot.id));
-          // };
-
-          // getLastMessages();
-          // setLastMessage(lastMessage);
-        });
+        }
       });
+    // .get()
+    // .then(querySnapshot => {
+    //   querySnapshot.forEach(documentSnapshot => {
+    //     if (documentSnapshot.id.includes(uid)) {
+    //       setchannelID(documentSnapshot.id);
+
+    //       // firestore()
+    //       //   .collection('Channels')
+    //       //   .doc(documentSnapshot.id)
+    //       //   .onSnapshot(documentSnapshot => {
+    //       //     if (documentSnapshot) {
+    //       //       const data = documentSnapshot.data();
+    //       //       console.log('dtdt', data);
+    //       //       setLastMessage(data);
+    //       //     }
+    //       //   });
+
+    //       let otherUserId = documentSnapshot.id.replace(uid, '');
+    //       firestore()
+    //         .collection('Users')
+    //         .doc(otherUserId)
+    //         .get()
+    //         .then(documentSnapshot => {
+    //           if (documentSnapshot.exists) {
+    //             let image = otherUserId + '.jpg';
+    //             let obj = {};
+
+    //             obj.id = otherUserId;
+    //             obj.name = documentSnapshot.data().name;
+    //             obj.phone = documentSnapshot.data().phone;
+    //             storage()
+    //               .ref(image)
+    //               .getDownloadURL()
+    //               .then(res => {
+    //                 obj.image = res;
+    //                 tmpUsers.current.push(obj);
+    //                 setUsers(tmpUsers.current);
+    //               })
+    //               .catch(e => {
+    //                 console.log('error', e);
+    //               });
+
+    //             database()
+    //               .ref(`/online/${otherUserId}`)
+    //               .on('value', snapshot => {
+    //                 //console.log('User data: ', snapshot.val());
+    //                 setStatus(snapshot.val()?.isActive);
+    //                 setLastSeen(snapshot.val()?.lastSeen);
+    //               });
+    //           }
+    //         });
+    //     }
+    //     // const getLastMessages = () => {
+    //     //   dispatch(messageActions.readLastMessage(documentSnapshot.id));
+    //     // };
+
+    //     // getLastMessages();
+    //     // setLastMessage(lastMessage);
+    //   });
+    // });
   }, []);
 
   const startConversation = () => {
@@ -208,15 +230,19 @@ const ChatHomeScreen = ({navigation}) => {
     return item?.recordID?.toString() || idx.toString();
   };
   const renderItem = ({item, index}) => {
+    // console.log('items', item);
     return (
       <ChatView
         contact={item}
-        userstatus={userStatus}
-        lastseen={userLastSeen}
-        mess={lastmessage}
         onPress={() => {
           // navigation.navigate("ChatMainScreen", { item, channelID,userLastSeen,userStatus });
-          navigation.navigate('ChatMainScreen', {item, channelID});
+          navigation.navigate('ChatMainScreen', {
+            item: {
+              ...item,
+              created_at: item.created_at.toString(),
+              updated_at: item.updated_at.toString(),
+            },
+          });
         }}
       />
     );
@@ -225,9 +251,9 @@ const ChatHomeScreen = ({navigation}) => {
   return (
     <View style={{backgroundColor: '#101D24', flexGrow: 1}}>
       <StatusBar barStyle="light-content" backgroundColor="#101D24" />
-      {users.length !== 0 && (
+      {channelDetails.length !== 0 && (
         <FlatList
-          data={users}
+          data={channelDetails}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           style={{flex: 1}}

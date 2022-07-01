@@ -2,33 +2,42 @@ import React from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
+import {useSelector} from 'react-redux';
 
-const ChatView = ({contact, onPress, userstatus, lastseen, mess}) => {
-  // console.log('message', mess);
-  const imageUrl = contact?.image;
+const ChatView = ({contact, onPress}) => {
+  const uid = useSelector(state => state.user.token);
+  const reciever = contact?.members.filter(myid => myid !== uid);
+  const recieverid = reciever.toString();
+  const recieverName = contact?.users_details?.[recieverid].name;
+  const recieverProfile = contact?.users_details?.[recieverid].profile;
+  console.log('111', contact?.sender_id, uid);
   return (
     <TouchableOpacity style={styles.contactCon} onPress={onPress}>
       <View style={styles.placeholder}>
-        {imageUrl === '' ? (
-          <Text style={styles.txt}>{contact?.givenName[0]}</Text>
+        {recieverProfile === '' ? (
+          <Text style={styles.txt}>{contact?.users_details}</Text>
         ) : (
           <Image
-            source={{uri: imageUrl}}
+            source={{uri: recieverProfile}}
             style={{width: '100%', height: '100%'}}
           />
         )}
       </View>
       <View style={styles.contactDat}>
-        <Text style={styles.name}>{contact?.name}</Text>
+        <Text style={styles.name}>{recieverName}</Text>
         <View style={{flexDirection: 'row'}}>
-          <Icon
-            name="checkmark-done-outline"
-            size={20}
-            style={{paddingLeft: 5, paddingTop: 5}}
-            color={mess?.seen ? '#3AB0FF' : 'grey'}
-          />
-          <Text style={{paddingLeft: 5, paddingTop: 5, color: '#fff'}}>
-            {mess?.last_message}
+          {contact?.sender_id === uid && (
+            <Icon
+              name="checkmark-done-outline"
+              size={20}
+              style={{paddingLeft: 5, paddingTop: 5}}
+              color={contact?.seen ? '#3AB0FF' : 'grey'}
+            />
+          )}
+          <Text
+            style={{paddingLeft: 5, paddingTop: 5, color: '#fff'}}
+            numberOfLines={1}>
+            {contact?.last_message || 'start chatting'}
           </Text>
         </View>
       </View>
@@ -38,7 +47,7 @@ const ChatView = ({contact, onPress, userstatus, lastseen, mess}) => {
             paddingTop: 5,
             color: '#fff',
           }}>
-          {moment(mess?.updated_at?.toDate()).format('hh:mm a')}
+          {/* {moment(contact?.updated_at?.toDate()).format('hh:mm a')} */}
         </Text>
         {/*{userstatus ?<Text style={{color:'#fff'}}>Online</Text>:<Text style={{color:'#fff'}}>{lastseen?.slice(15,21)}</Text>}*/}
       </View>

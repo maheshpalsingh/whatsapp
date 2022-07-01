@@ -15,3 +15,4 @@ export {default as ChatHomeScreen} from './Authorized/ChatHomeScreen/ChatHomeScr
 export {default as ChatMainScreen} from './Authorized/ChatMainScreen/ChatMainScreen';
 
 export {default as Settings} from './Authorized/Settings/Settings';
+export {default as UserDetail} from './Authorized/UserDetail/UserDetail';
