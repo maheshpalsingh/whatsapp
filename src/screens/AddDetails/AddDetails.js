@@ -17,6 +17,7 @@ import database from '@react-native-firebase/database';
 import * as ImagePicker from 'react-native-image-picker';
 import ImageResizer from 'react-native-image-resizer';
 import storage, {firebase} from '@react-native-firebase/storage';
+import FastImage from 'react-native-fast-image';
 
 const AddDetails = ({route}) => {
   const navigation = useNavigation();
@@ -24,6 +25,7 @@ const AddDetails = ({route}) => {
   const uid = route?.params?.uid;
   console.log('cno', cno, uid);
   const [name, setName] = useState('');
+  const [about, setAbout] = useState('');
   const [url, seturl] = useState(null);
   const dispatch = useDispatch();
 
@@ -35,8 +37,10 @@ const AddDetails = ({route}) => {
       .then(documentSnapshot => {
         console.log('User exists: ', documentSnapshot.exists);
         if (documentSnapshot.exists) {
-          console.log('User data: ', documentSnapshot.data());
-          setName(documentSnapshot.data().name);
+          const data = documentSnapshot.data();
+          console.log('User data: ', data);
+          setName(data?.name);
+          setAbout(data?.about);
           storage()
             .ref(`${uid}.jpg`)
             .getDownloadURL()
@@ -71,6 +75,7 @@ const AddDetails = ({route}) => {
         {
           name: name,
           phone: cno,
+          about: about,
         },
         {merge: true},
       )
@@ -89,7 +94,7 @@ const AddDetails = ({route}) => {
         obj.name = name;
         obj.image_url = url;
         obj.phone = cno;
-        console.log('ogbj', obj);
+        obj.about = about;
         dispatch(setMyDetails(obj));
       })
       .catch(e => {
@@ -139,22 +144,15 @@ const AddDetails = ({route}) => {
               snapshot => {
                 let progress = snapshot.bytesTransferred / snapshot.totalBytes;
                 console.log('Uploading: ', progress);
-                // setTransferred(progress * 100);
-                // this.props.updateSelfiePic(null);
-                // this.setState({profilePicUploadProgress: 0.002 + progress});
               },
               error => {
                 console.log('imageerr', error);
-                // sentry.captureMessage('Error uploading selfie', error.message);
               },
             );
             //End up upload
             ref
               .then(() => {
-                debugger;
                 console.log('Success');
-                //Save URL to Firestore
-
                 const picRef = storage().ref(`${uid}.jpg`);
                 picRef
                   .getDownloadURL()
@@ -182,7 +180,7 @@ const AddDetails = ({route}) => {
       }
     });
   };
-
+  const imagetext = url ? 'Update image' : 'Select image';
   return (
     <View style={{backgroundColor: '#fff', flex: 1}}>
       <View style={{marginTop: 60, alignItems: 'center'}}>
@@ -190,7 +188,7 @@ const AddDetails = ({route}) => {
       </View>
       <View style={{marginTop: 20, alignItems: 'center'}}>
         <Text style={{fontSize: 16, marginHorizontal: 10, color: 'grey'}}>
-          Please provide your name and an optional profile{' '}
+          Please provide your name and an optional profile
         </Text>
         <Text style={{fontSize: 16, color: 'grey'}}>photo</Text>
       </View>
@@ -205,12 +203,12 @@ const AddDetails = ({route}) => {
           height: '18%',
           width: '40%',
         }}>
-        <Image
+        <FastImage
           source={{uri: url}}
           style={{flex: 1, width: '100%', height: '100%', borderRadius: 100}}
         />
         <TouchableOpacity style={{position: 'absolute'}} onPress={selectImage}>
-          <Text> Select image </Text>
+          <Text>{imagetext} </Text>
         </TouchableOpacity>
       </View>
       <View style={{alignItems: 'center'}}>
@@ -233,6 +231,29 @@ const AddDetails = ({route}) => {
           value={name}
           onChangeText={text => setName(text)}
           placeholder="Type your name here.."
+          placeholderTextColor="#aaaaaa"
+          underlineColorAndroid="transparent"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={{
+            alignItems: 'center',
+            width: '80%',
+            borderBottomWidth: 1,
+            borderBottomColor: 'green',
+            backgroundColor: 'white',
+            marginTop: 20,
+            marginBottom: 10,
+            marginLeft: 45,
+            marginRight: 30,
+            paddingLeft: 16,
+            height: 48,
+            borderRadius: 5,
+            overflow: 'hidden',
+          }}
+          value={about}
+          onChangeText={text => setAbout(text)}
+          placeholder="Type about you here.."
           placeholderTextColor="#aaaaaa"
           underlineColorAndroid="transparent"
           autoCapitalize="none"

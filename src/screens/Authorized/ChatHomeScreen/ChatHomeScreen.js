@@ -145,6 +145,7 @@ const ChatHomeScreen = ({navigation}) => {
           const temp = [];
           documentSnapshot?.docs.forEach(doc => {
             const data = doc.data();
+
             const obj = {
               id: doc.id,
               ...data,

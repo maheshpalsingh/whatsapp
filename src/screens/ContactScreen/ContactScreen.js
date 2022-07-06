@@ -166,12 +166,13 @@ const ContactScreen = ({navigation}) => {
                               .then(documentSnapshot => {
                                 if (documentSnapshot.exists) {
                                   obj1.name = documentSnapshot.data().name;
+                                  obj.phone = documentSnapshot.data().phone;
                                   storage()
                                     .ref(`${uid}.jpg`)
                                     .getDownloadURL()
                                     .then(res => {
                                       obj1.profile = res;
-
+                                      console.log('123', obj1, uid, mydetails);
                                       firestore()
                                         .collection('Channels')
                                         .doc(uid + otherUserId)
@@ -184,6 +185,7 @@ const ContactScreen = ({navigation}) => {
                                             sender_id: '',
                                             receiver_id: '',
                                             seen: false,
+                                            deleted_for_all: false,
                                             last_message_type: '',
                                             last_message: '',
                                             last_message_seen: false,
@@ -192,10 +194,12 @@ const ContactScreen = ({navigation}) => {
                                               [uid]: {
                                                 name: mydetails?.name,
                                                 profile: mydetails?.image_url,
+                                                phone: mydetails?.phone,
                                               },
                                               [otherUserId]: {
                                                 name: obj1.name,
                                                 profile: obj1.profile,
+                                                phone: obj1?.phone,
                                               },
                                             },
                                           },
@@ -212,7 +216,7 @@ const ContactScreen = ({navigation}) => {
                                           );
                                         })
                                         .catch(e => {
-                                          console.log(e);
+                                          console.log('error', e);
                                         });
                                     });
                                 }

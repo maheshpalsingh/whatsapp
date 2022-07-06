@@ -16,3 +16,5 @@ export {default as ChatMainScreen} from './Authorized/ChatMainScreen/ChatMainScr
 
 export {default as Settings} from './Authorized/Settings/Settings';
 export {default as UserDetail} from './Authorized/UserDetail/UserDetail';
+
+export {default as Profile} from './Authorized/Profile/Profile';

@@ -15,6 +15,7 @@ import {
   ImageBackground,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -31,6 +32,7 @@ import axios from 'axios';
 import * as messageActions from '../../../store/actions/messages';
 import moment from 'moment';
 import {READ_MESSAGE} from '../../../store/actions/messages';
+import FastImage from 'react-native-fast-image';
 
 const ChatMainScreen = ({route}) => {
   const navigation = useNavigation();
@@ -42,7 +44,7 @@ const ChatMainScreen = ({route}) => {
   const flatlistRef = useRef();
   const uid = useSelector(state => state.user.token);
   const channelDetails = route?.params?.item;
-
+  const [animating, setAnimating] = useState(false);
   // const [message, setMessage] = useState([]);
   const [newMessage, setnewMessage] = useState('');
   const getMessage = useSelector(
@@ -60,6 +62,7 @@ const ChatMainScreen = ({route}) => {
   const recieverid = reciever.toString();
   const recieverName = channelDetails?.users_details?.[recieverid].name;
   const recieverProfile = channelDetails?.users_details?.[recieverid].profile;
+  const recieverPhone = channelDetails?.users_details?.[recieverid].phone;
 
   const db = firestore().collection('Channels').doc(channelDetails?.id);
 
@@ -104,7 +107,7 @@ const ChatMainScreen = ({route}) => {
           channelRef.set(
             {
               updated_at: new Date(),
-              last_message_seen: true,
+              seen: true,
             },
             {
               merge: true,
@@ -284,6 +287,7 @@ const ChatMainScreen = ({route}) => {
           sender_id: uid,
           receiver_id: recieverid,
           seen: false,
+          deleted_for_all: false,
           last_message_type: 'text',
           last_message: newMessage,
           last_message_seen: false,
@@ -450,7 +454,7 @@ const ChatMainScreen = ({route}) => {
             updated_at: new Date(),
             deleted_for_all: true,
           };
-
+          // console.log('obj1', obj1);
           allmessages[index] = obj1;
           dispatch({
             type: READ_MESSAGE,
@@ -460,20 +464,23 @@ const ChatMainScreen = ({route}) => {
           // console.log('ooooo', message);
 
           // console.log('inin', last_ref, selectedID.current);
-          const last_ref = channelRef
-            .get()
-            .then(document => document.data().message_id);
-          if (last_ref === selectedID.current) {
-            channelRef
-              .set(
-                {
-                  updated_at: new Date(),
-                  deleted_for_all: true,
-                },
-                {merge: true},
-              )
-              .then();
-          }
+          const last_ref = channelRef.get().then(document => {
+            const mss_id = document.data().message_id;
+
+            console.log('mss', mss_id);
+            if (mss_id === selectedID.current) {
+              channelRef
+                .set(
+                  {
+                    updated_at: new Date(),
+                    deleted_for_all: true,
+                    // last_message: 'This message was deleted',
+                  },
+                  {merge: true},
+                )
+                .then();
+            }
+          });
         });
     }
   };
@@ -493,6 +500,8 @@ const ChatMainScreen = ({route}) => {
   };
 
   const launchCamera = async () => {
+    setAnimating(true);
+
     const options = {
       maxWidth: 2000,
       maxHeight: 2000,
@@ -511,56 +520,76 @@ const ChatMainScreen = ({route}) => {
         alert(response.customButton);
       } else {
         const source = response.assets[0].uri;
-        //
-        // console.log('1',source);
-        // navigation.navigate('SelectImage',{image:source})
 
-        let m1 = new Date();
-        storage()
-          .ref(`messages/${channelDetails?.id}/${m1}.jpg`)
-          .putFile(source, {
-            cacheControl: 'no-store', // disable caching
-          })
-          .then(res => {
-            const picRef = storage().ref(
-              `messages/${channelDetails?.id}/${m1}.jpg`,
-            );
-            picRef
-              .getDownloadURL()
-              .then(url => {
-                if (url) {
-                  console.log('=========download url===========', url);
-                  channelRef
-                    .collection('messages')
-                    .doc()
-                    .set(
-                      {
-                        type: 'image',
-                        sender: uid,
-                        image: url,
-                        time: new Date(),
-                        seen: false,
-                      },
-                      {merge: true},
-                    )
-                    .then(() => {
-                      console.log('Message added!');
-                      setnewMessage('');
-                    })
-                    .catch(e => {
-                      console.log(e);
-                    });
-                }
-              })
-              .catch(error => {
-                console.log('Error getting image 1: ', error.message);
-              });
-          });
+        // let m1 = new Date();
+        // storage()
+        //   .ref(`messages/${channelDetails?.id}/${m1}.jpg`)
+        //   .putFile(source, {
+        //     cacheControl: 'no-store', // disable caching
+        //   })
+        //   .then(res => {
+        //     const picRef = storage().ref(
+        //       `messages/${channelDetails?.id}/${m1}.jpg`,
+        //     );
+        //     picRef
+        //       .getDownloadURL()
+        //       .then(url => {
+        //         if (url) {
+        //           const message_ref = channelRef.collection('messages').doc();
 
-        // const result = email.split('@')[0];
+        //           const obj = {
+        //             type: 'photo',
+        //             sender: uid,
+        //             image: url,
+        //             created_at: new Date(),
+        //             updated_at: new Date(),
+        //             seen: false,
+        //           };
+
+        //           message_ref.set(obj, {merge: true}).then(async () => {
+        //             dispatch({
+        //               type: READ_MESSAGE,
+        //               payload: {
+        //                 [channelDetails?.id]: [
+        //                   {message_id: message_ref.id, ...obj},
+        //                   ...message,
+        //                 ],
+        //               },
+        //             });
+        //           });
+
+        //           channelRef.set(
+        //             {
+        //               updated_at: new Date(),
+        //               sender_id: uid,
+        //               receiver_id: recieverid,
+        //               seen: false,
+        //               deleted_for_all: false,
+        //               last_message_type: 'photo',
+        //               image: url,
+        //               last_message_seen: false,
+        //               message_id: message_ref.id,
+        //             },
+        //             {
+        //               merge: true,
+        //             },
+        //           );
+
+        //         }
+        //       })
+        //       .catch(error => {
+        //         console.log('Error getting image 1: ', error.message);
+        //       });
+        //   });
       }
     });
+    setAnimating(false);
   };
+
+  const recordVoice = () => {
+    console.log('recording...');
+  };
+
   const bg =
     'https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg';
   return (
@@ -605,7 +634,14 @@ const ChatMainScreen = ({route}) => {
       <KeyboardAvoidingView behavior={'padding'} style={{flex: 1}}>
         {/*Header*/}
         <TouchableOpacity
-          onPress={() => navigation.navigate('UserDetail', {recieverid})}
+          onPress={() =>
+            navigation.navigate('UserDetail', {
+              recieverid,
+              recieverProfile,
+              recieverName,
+              recieverPhone,
+            })
+          }
           style={{
             flexDirection: 'row',
             backgroundColor: '#222D36',
@@ -622,8 +658,10 @@ const ChatMainScreen = ({route}) => {
               {recieverProfile === '' ? (
                 <Text style={styles.txt}>{recieverName[0]}</Text>
               ) : (
-                <Image
-                  source={{uri: recieverProfile}}
+                <FastImage
+                  source={{
+                    uri: recieverProfile,
+                  }}
                   style={{width: '100%', height: '100%'}}
                 />
               )}
@@ -646,6 +684,7 @@ const ChatMainScreen = ({route}) => {
 
         <View style={{flex: 1}}>
           <Image source={{uri: bg}} style={StyleSheet.absoluteFillObject} />
+
           <FlatList
             inverted
             ref={flatlistRef}
@@ -658,15 +697,21 @@ const ChatMainScreen = ({route}) => {
             keyExtractor={keyExtractor}
             style={{flex: 1}}
           />
+          {animating && (
+            <ActivityIndicator
+              size="large"
+              color="#00ff00"
+              animating={animating}
+            />
+          )}
         </View>
-
         {/*Footer*/}
         <View style={styles.footer}>
           <TouchableOpacity onPress={launchCamera} style={styles.emoji}>
             <Icon name="camera" size={30} color="grey" />
           </TouchableOpacity>
           {/*<View style={{ flex: 1,alignSelf:'center' }}>*/}
-          <View style={{flex: 1}}>
+          <View style={{flex: 1, flexDirection: 'row'}}>
             <TextInput
               placeholder="Message"
               placeholderTextColor="grey"
@@ -674,6 +719,14 @@ const ChatMainScreen = ({route}) => {
               onChangeText={t => setnewMessage(t)}
               style={styles.input}
             />
+            <TouchableOpacity
+              onPress={recordVoice}
+              style={{
+                justifyContent: 'center',
+                right: 40,
+              }}>
+              <Icon name="mic" size={30} color="grey" />
+            </TouchableOpacity>
           </View>
           <TouchableOpacity onPress={sendMessage} style={styles.send}>
             <Icon

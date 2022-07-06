@@ -10,6 +10,7 @@ import {
   Screen2,
   Settings,
   UserDetail,
+  Profile,
 } from '../screens/index';
 import {useDispatch, useSelector, Provider} from 'react-redux';
 import {SafeAreaView} from 'react-native';
@@ -90,13 +91,19 @@ const NavIndex = () => {
               options={{
                 title: 'Settings',
                 headerTitleStyle: {color: '#fff'},
-                //headerStyle: {},
               }}
             />
             <Stack.Screen
               name="UserDetail"
               component={UserDetail}
               options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Profile"
+              component={Profile}
+              options={{
+                headerTitleStyle: {color: '#fff'},
+              }}
             />
           </>
         ) : (

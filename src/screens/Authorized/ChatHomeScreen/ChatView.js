@@ -10,7 +10,7 @@ const ChatView = ({contact, onPress}) => {
   const recieverid = reciever.toString();
   const recieverName = contact?.users_details?.[recieverid].name;
   const recieverProfile = contact?.users_details?.[recieverid].profile;
-  console.log('111', contact?.sender_id, uid);
+  // console.log('111', contact, uid);
   return (
     <TouchableOpacity style={styles.contactCon} onPress={onPress}>
       <View style={styles.placeholder}>
@@ -37,7 +37,11 @@ const ChatView = ({contact, onPress}) => {
           <Text
             style={{paddingLeft: 5, paddingTop: 5, color: '#fff'}}
             numberOfLines={1}>
-            {contact?.last_message || 'start chatting'}
+            {contact.last_message_type === 'photo'
+              ? 'Photo'
+              : contact?.deleted_for_all
+              ? 'This message was deleted'
+              : contact?.last_message || 'start conversation'}
           </Text>
         </View>
       </View>

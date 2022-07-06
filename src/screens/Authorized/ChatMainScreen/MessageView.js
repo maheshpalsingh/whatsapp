@@ -3,6 +3,7 @@ import {Text, View, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
+import FastImage from 'react-native-fast-image';
 const MessageView = ({message, onLongPress}) => {
   const uid = useSelector(state => state.user.token);
   let myid = message.sender === uid;
@@ -23,8 +24,8 @@ const MessageView = ({message, onLongPress}) => {
       onLongPress={() => onLongPress(message?.message_id, message?.sender)}>
       {/*<Text> {message.sender}</Text>*/}
 
-      {message.type === 'image' && (
-        <Image
+      {message.type === 'photo' && (
+        <FastImage
           source={{uri: message?.image}}
           style={{width: 200, height: 200}}
         />
