@@ -34,7 +34,7 @@ const ContactScreen = ({navigation}) => {
           }
         }
         setContacts(contacts);
-        // console.log('cnoPhone',cnoPhone);
+        //console.log('cnoPhone', cnoPhone);
       })
       .then(() => {
         for (let key in cnoPhone.current) {
@@ -69,7 +69,7 @@ const ContactScreen = ({navigation}) => {
                 const data = d.data();
                 if (data) {
                   setdatadb(data);
-                  // console.log("User data: ",data);
+                  //console.log('User data: ', data);
                 }
 
                 for (let key in data) {
@@ -80,7 +80,8 @@ const ContactScreen = ({navigation}) => {
                     cnoDB.current.push(data.phone.slice(3));
                   }
                 }
-                // console.log('Dddd', cnoDB.current, cnoPhone.current);
+                // console.log('Dddd1', cnoDB.current);
+                // console.log('Dddd2', cnoPhone.current);
               });
             });
         }
@@ -129,18 +130,22 @@ const ContactScreen = ({navigation}) => {
               const isUser = cnoDB.current.includes(contactno);
               if (isUser) {
                 console.log('yes');
-
                 firestore()
                   .collection('Channels')
                   .doc(uid + otherUserId)
                   .get()
                   .then(querySnapshot => {
+                    let data = querySnapshot.data();
                     if (querySnapshot.data()) {
-                      console.log('1q');
                       console.log('already in', obj);
+                      const item = {
+                        id: querySnapshot.id,
+                        ...data,
+                        created_at: data?.created_at?.toDate(),
+                        updated_at: data?.updated_at?.toDate(),
+                      };
                       navigation.navigate('ChatMainScreen', {
-                        item: obj,
-                        channelID: uid + otherUserId,
+                        item: item,
                       });
                     } else {
                       firestore()
@@ -148,12 +153,16 @@ const ContactScreen = ({navigation}) => {
                         .doc(otherUserId + uid)
                         .get()
                         .then(querySnapshot => {
-                          //console.log('query data==', querySnapshot.data());
+                          let data = querySnapshot.data();
                           if (querySnapshot.data()) {
-                            console.log('already in123', obj);
+                            const item = {
+                              id: querySnapshot.id,
+                              ...data,
+                              created_at: data?.created_at?.toDate(),
+                              updated_at: data?.updated_at?.toDate(),
+                            };
                             navigation.navigate('ChatMainScreen', {
-                              item: obj,
-                              channelID: otherUserId + uid,
+                              item: item,
                             });
                           } else {
                             console.log('creating new channel');
@@ -166,79 +175,54 @@ const ContactScreen = ({navigation}) => {
                               .then(documentSnapshot => {
                                 if (documentSnapshot.exists) {
                                   obj1.name = documentSnapshot.data().name;
-                                  obj.phone = documentSnapshot.data().phone;
+                                  obj1.phone = documentSnapshot.data().phone;
                                   storage()
-                                    .ref(`${uid}.jpg`)
+                                    .ref(`${otherUserId}.jpg`)
                                     .getDownloadURL()
                                     .then(res => {
                                       obj1.profile = res;
-                                      console.log('123', obj1, uid, mydetails);
+
+                                      channelObj = {
+                                        members: [uid, otherUserId],
+                                        created_at: new Date(),
+                                        updated_at: new Date(),
+                                        created_by: uid,
+                                        sender_id: '',
+                                        receiver_id: '',
+                                        seen: false,
+                                        deleted_for_all: false,
+                                        last_message_type: '',
+                                        last_message: '',
+                                        last_message_seen: false,
+                                        message_id: '',
+                                        users_details: {
+                                          [uid]: {
+                                            name: mydetails?.name,
+                                            profile: mydetails?.image_url,
+                                            phone: mydetails?.phone,
+                                          },
+                                          [otherUserId]: {
+                                            name: obj1.name,
+                                            profile: obj1.profile,
+                                            phone: obj1?.phone,
+                                          },
+                                        },
+                                      };
+                                      console.log('ress', obj1.profile);
                                       firestore()
                                         .collection('Channels')
                                         .doc(uid + otherUserId)
-                                        .set(
-                                          {
-                                            members: [uid, otherUserId],
-                                            created_at: new Date(),
-                                            updated_at: new Date(),
-                                            created_by: uid,
-                                            sender_id: '',
-                                            receiver_id: '',
-                                            seen: false,
-                                            deleted_for_all: false,
-                                            last_message_type: '',
-                                            last_message: '',
-                                            last_message_seen: false,
-                                            message_id: '',
-                                            users_details: {
-                                              [uid]: {
-                                                name: mydetails?.name,
-                                                profile: mydetails?.image_url,
-                                                phone: mydetails?.phone,
-                                              },
-                                              [otherUserId]: {
-                                                name: obj1.name,
-                                                profile: obj1.profile,
-                                                phone: obj1?.phone,
-                                              },
-                                            },
-                                          },
-                                          {merge: true},
-                                        )
+                                        .set(channelObj)
                                         .then(() => {
                                           console.log('Channel added!');
-                                          navigation.navigate(
-                                            'ChatMainScreen',
-                                            {
-                                              item: obj,
-                                              channelID: otherUserId + uid,
-                                            },
-                                          );
-                                        })
-                                        .catch(e => {
-                                          console.log('error', e);
+                                          channelDetails(uid + otherUserId);
+                                          // navigation.navigate('Home');
                                         });
                                     });
                                 }
                               });
                           }
                         });
-
-                      //   database()
-                      //     .ref(`/channels/${uid+otherUserId}`)
-                      //     .set({
-                      //       members:[uid,otherUserId],
-                      //       // messages:[
-                      //       //  senderid,messages,messageid,time,date,
-                      //       //   ],
-                      //       })
-                      //     .then(() => {
-                      //       console.log('Data set.');
-                      //
-                      //       navigation.navigate("Home");
-                      //     })
-                      //   //
-                      // }
                     }
                   });
               }
@@ -247,6 +231,28 @@ const ContactScreen = ({navigation}) => {
               console.log('error', e);
             });
         });
+      });
+  };
+
+  const channelDetails = channelID => {
+    console.log('channelID', channelID);
+    firestore()
+      .collection('Channels')
+      .doc(channelID)
+      .get()
+      .then(querySnapshot => {
+        let data = querySnapshot.data();
+        if (querySnapshot.data()) {
+          const item = {
+            id: querySnapshot.id,
+            ...data,
+            created_at: data?.created_at?.toDate(),
+            updated_at: data?.updated_at?.toDate(),
+          };
+          navigation.navigate('ChatMainScreen', {
+            item: item,
+          });
+        }
       });
   };
 

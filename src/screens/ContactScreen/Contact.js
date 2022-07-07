@@ -1,31 +1,40 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import database from '@react-native-firebase/database';
+import firestore from '@react-native-firebase/firestore';
 
 const Contact = ({contact, OnPress}) => {
-  const [datadb, setdatadb] = useState(null);
+  const [datadb, setdatadb] = useState();
   let invite = false;
 
-  const chatapp = () => {
+  const isWhatsAppUser = () => {
     const contactno = contact.phoneNumbers[0].number.replace(/\D/g, '');
+
     for (let key in datadb) {
-      const contactdb = datadb[key].phone.slice(3);
-      console.log(contactdb);
+      const contactdb = datadb[key].slice(3);
+      // console.log('contact from databse', contactdb);
       if (contactdb === contactno) {
         invite = true;
       }
     }
   };
   useEffect(() => {
-    database()
-      .ref('/users')
-      .on('value', snapshot => {
-        setdatadb(snapshot.val());
-        // console.log('User data: ', snapshot.val());
+    const contactno = contact.phoneNumbers[0].number.replace(/\D/g, '');
+    firestore()
+      .collection('Users')
+      .where('phone', '==', `+91${contactno}`)
+      .get()
+      .then(querySnapshot => {
+        let temp = [];
+        querySnapshot.forEach(d => {
+          // console.log('User data: ', d?.data()?.phone);
+          temp.push(d?.data()?.phone);
+        });
+        setdatadb(temp);
       });
   }, []);
 
-  chatapp();
+  isWhatsAppUser();
 
   const imageUrl = contact?.thumbnailPath;
 

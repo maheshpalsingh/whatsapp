@@ -138,9 +138,7 @@ const ChatHomeScreen = ({navigation}) => {
     firestore()
       .collection('Channels')
       .where('members', 'array-contains-any', [uid])
-      // .orderBy('updated_at', 'desc')
       .onSnapshot(documentSnapshot => {
-        // console.log('documen', documentSnapshot);
         if (!documentSnapshot?.empty) {
           const temp = [];
           documentSnapshot?.docs.forEach(doc => {
@@ -154,72 +152,12 @@ const ChatHomeScreen = ({navigation}) => {
             };
             temp.push(obj);
           });
-          // console.log('mychannels', temp);
+
           if (temp.length) {
             setChannelDetails(temp);
           }
         }
       });
-    // .get()
-    // .then(querySnapshot => {
-    //   querySnapshot.forEach(documentSnapshot => {
-    //     if (documentSnapshot.id.includes(uid)) {
-    //       setchannelID(documentSnapshot.id);
-
-    //       // firestore()
-    //       //   .collection('Channels')
-    //       //   .doc(documentSnapshot.id)
-    //       //   .onSnapshot(documentSnapshot => {
-    //       //     if (documentSnapshot) {
-    //       //       const data = documentSnapshot.data();
-    //       //       console.log('dtdt', data);
-    //       //       setLastMessage(data);
-    //       //     }
-    //       //   });
-
-    //       let otherUserId = documentSnapshot.id.replace(uid, '');
-    //       firestore()
-    //         .collection('Users')
-    //         .doc(otherUserId)
-    //         .get()
-    //         .then(documentSnapshot => {
-    //           if (documentSnapshot.exists) {
-    //             let image = otherUserId + '.jpg';
-    //             let obj = {};
-
-    //             obj.id = otherUserId;
-    //             obj.name = documentSnapshot.data().name;
-    //             obj.phone = documentSnapshot.data().phone;
-    //             storage()
-    //               .ref(image)
-    //               .getDownloadURL()
-    //               .then(res => {
-    //                 obj.image = res;
-    //                 tmpUsers.current.push(obj);
-    //                 setUsers(tmpUsers.current);
-    //               })
-    //               .catch(e => {
-    //                 console.log('error', e);
-    //               });
-
-    //             database()
-    //               .ref(`/online/${otherUserId}`)
-    //               .on('value', snapshot => {
-    //                 //console.log('User data: ', snapshot.val());
-    //                 setStatus(snapshot.val()?.isActive);
-    //                 setLastSeen(snapshot.val()?.lastSeen);
-    //               });
-    //           }
-    //         });
-    //     }
-    //     // const getLastMessages = () => {
-    //     //   dispatch(messageActions.readLastMessage(documentSnapshot.id));
-    //     // };
-
-    //     // getLastMessages();
-    //     // setLastMessage(lastMessage);
-    //   });
-    // });
   }, []);
 
   const startConversation = () => {
@@ -231,7 +169,7 @@ const ChatHomeScreen = ({navigation}) => {
     return item?.recordID?.toString() || idx.toString();
   };
   const renderItem = ({item, index}) => {
-    // console.log('items', item);
+    //console.log('items', item);
     return (
       <ChatView
         contact={item}
