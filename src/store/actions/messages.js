@@ -2,7 +2,7 @@ import firestore from '@react-native-firebase/firestore';
 
 export const READ_MESSAGE = 'READ_MESSAGE';
 export const READ_LASTMESSAGE = 'READ_LASTMESSAGE';
-export const SEND_MESSAGE = 'SEND_MESSAGE';
+export const READ_CHANNEL_DETAILS = 'READ_CHANNEL_DETAILS';
 
 export const readAllMessages = channelID => {
   return async dispatch => {
@@ -104,8 +104,13 @@ export const readNewMessage = (channelID, lastVisible) => {
   };
 };
 
+export const readChannelDetails = details => {
+  return {type: READ_CHANNEL_DETAILS, payload: details};
+};
+
 export const readLastMessage = channelID => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    const myid = getState();
     try {
       firestore()
         .collection('Channels')
@@ -126,47 +131,32 @@ export const readLastMessage = channelID => {
   };
 };
 
-// export const sendMessage=(channelID,newMessage,uid)=>{
-//   return async (dispatch,getState) => {
+// export const readChannelDetails = channelID => {
+//   return async dispatch => {
 //     try {
-//       const prevMessages= getState().message.messages[channelID] || []
 //       firestore()
-//         .collection("Channels")
-//         .doc(channelID)
-//         .collection("messages")
-//         .doc()
-//         .set(
-//           {
-//             type: "text",
-//             sender: uid,
-//             text: newMessage,
-//             created_at: new Date(),
-//             seen: false,
-//           },
-//           { merge: true },
-//         )
-//         .then(documentSnapshot => {
-//           const temp = [];
-//
-//           if (documentSnapshot) {
-//             documentSnapshot.docs.forEach(doc => {
-//               const data= doc.data()
-//               let date=data.created_at.toDate()
-//               let obj1={...data,created_at:date,message_id:doc.id}
-//               temp.push(obj1);
+//         .collection('Channels')
+//         .where('members', 'array-contains-any', [channelID])
+//         .onSnapshot(documentSnapshot => {
+//           if (!documentSnapshot?.empty) {
+//             const temp = [];
+//             documentSnapshot?.docs.forEach(doc => {
+//               const data = doc.data();
+
+//               const obj = {
+//                 id: doc.id,
+//                 ...data,
+//                 created_at: data?.created_at?.toDate(),
+//                 updated_at: data?.updated_at?.toDate(),
+//               };
+//               dispatch({
+//                 type: READ_CHANNEL_DETAILS,
+//                 payload: {[doc.id]: obj},
+//               });
 //             });
 //           }
-//           if(temp.length>0)
-//           {
-//             dispatch({
-//               type: SEND_MESSAGE,
-//               payload: {[channelID]:[...prevMessages,...temp]},
-//             });
-//           }
-//
 //         });
-//     } catch (e) {
-//       console.log('Error while fetching messages', e);
-//     }
+
+//     } catch (e) {}
 //   };
-// }
+// };

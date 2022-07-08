@@ -3,11 +3,11 @@ import {View, StyleSheet, Text, TouchableOpacity, Image} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import auth from '@react-native-firebase/auth';
 import {useDispatch, useSelector} from 'react-redux';
-import {setMyDetails, setToken} from '../../../store/actions/users';
+import {setMyDetails, setMyID} from '../../../store/actions/users';
 import database from '@react-native-firebase/database';
 import FastImage from 'react-native-fast-image';
 const Settings = ({navigation}) => {
-  const uid = useSelector(state => state?.user?.token);
+  const uid = useSelector(state => state?.user?.myid);
   const mydetails = useSelector(state => state?.user?.mydetails);
 
   const dispatch = useDispatch();
@@ -24,7 +24,7 @@ const Settings = ({navigation}) => {
         auth()
           .signOut()
           .then(() => {
-            dispatch(setToken(null));
+            dispatch(setMyID(null));
             dispatch(setMyDetails(null));
           });
       });

@@ -3,7 +3,7 @@ import {View, Text, Button} from 'react-native';
 import Icons from 'react-native-vector-icons/Ionicons';
 import auth from '@react-native-firebase/auth';
 import {useDispatch, useSelector} from 'react-redux';
-import {setToken} from '../../../store/actions/users';
+import {setMyID} from '../../../store/actions/users';
 import database from '@react-native-firebase/database';
 const StatusScreen = () => {
   return (

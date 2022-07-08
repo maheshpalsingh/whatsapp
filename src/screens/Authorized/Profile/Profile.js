@@ -28,7 +28,7 @@ const Profile = ({route}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible1, setModalVisible1] = useState(false);
   const [animating, setAnimating] = useState(true);
-  const uid = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.myid);
   const dispatch = useDispatch();
 
   const openModal = () => {

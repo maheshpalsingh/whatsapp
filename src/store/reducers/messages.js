@@ -1,12 +1,13 @@
 import {
   READ_LASTMESSAGE,
   READ_MESSAGE,
-  SEND_MESSAGE,
+  READ_CHANNEL_DETAILS,
 } from '../actions/messages';
 
 const initialState = {
   messages: {},
   lastmessage: {},
+  channelDetails: [],
 };
 
 export default (state = initialState, action) => {
@@ -22,12 +23,12 @@ export default (state = initialState, action) => {
         lastmessage: action.payload,
       };
 
-    // case SEND_MESSAGE:
-    //   let newMessage=''
-    //   return {
-    //     ...state,
-    //     messages: {...state.messages, ...newMessage},
-    //   };
+    case READ_CHANNEL_DETAILS:
+      console.log('reducer', action.payload);
+      return {
+        ...state,
+        channelDetails: action.payload,
+      };
   }
   return state;
 };

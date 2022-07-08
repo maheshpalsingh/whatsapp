@@ -18,7 +18,7 @@ const UserDetail = ({route, navigation}) => {
   const profile = route?.params?.recieverProfile;
   const name = route?.params?.recieverName;
   const phone = route?.params?.recieverPhone;
-
+  const about = route?.params?.recieverStatus;
   const [isEnabled, setIsEnabled] = useState(false);
   const toggleSwitch = () => setIsEnabled(previousState => !previousState);
   const borderColor = '#0e1111';
@@ -147,7 +147,7 @@ const UserDetail = ({route, navigation}) => {
               fontWeight: '500',
               fontSize: 16,
             }}>
-            Hey there! I am using WhatsApp.
+            {about || 'Hey there! I am using WhatsApp.'}
           </Text>
         </View>
         <View style={{borderBottomWidth: 10, borderColor}}>

@@ -6,8 +6,8 @@ import {
   LoginScreen,
   HomeScreen,
   AddDetails,
-  Screen1,
-  Screen2,
+  StartScreen,
+  OtpScreen,
   Settings,
   UserDetail,
   Profile,
@@ -22,7 +22,7 @@ import storage from '@react-native-firebase/storage';
 
 const Stack = createStackNavigator();
 const NavIndex = () => {
-  const user = useSelector(state => state.user.token);
+  const user = useSelector(state => state.user.myid);
   const navigationRef = useRef();
   const handleNotification = (obj, channelID) => {
     // console.log('ooooo',obj,channelID);
@@ -109,8 +109,8 @@ const NavIndex = () => {
         ) : (
           <>
             <Stack.Screen
-              name="Screen1"
-              component={Screen1}
+              name="StartScreen"
+              component={StartScreen}
               options={{headerShown: false}}
             />
             <Stack.Screen
@@ -119,8 +119,8 @@ const NavIndex = () => {
               options={{headerShown: false}}
             />
             <Stack.Screen
-              name="Screen2"
-              component={Screen2}
+              name="OtpScreen"
+              component={OtpScreen}
               options={{headerShown: false}}
             />
             <Stack.Screen

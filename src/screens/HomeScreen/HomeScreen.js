@@ -61,15 +61,15 @@ export default function HomeScreen({navigation}) {
             </TouchableOpacity>
           </Modal>
         )}
-        <View>
+        <View style={{flex: 1}}>
           <Text style={{color: '#ADACAC', fontSize: 20, fontWeight: 'bold'}}>
             Whatsapp
           </Text>
         </View>
+
         <TouchableOpacity
           onPress={openModal}
           style={{
-            flex: 1,
             justifyContent: 'flex-end',
             alignItems: 'flex-end',
           }}>

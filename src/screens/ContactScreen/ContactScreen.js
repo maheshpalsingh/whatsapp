@@ -5,7 +5,7 @@ import Contacts from 'react-native-contacts';
 import database from '@react-native-firebase/database';
 import {useDispatch, useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
-import {setToken} from '../../store/actions/users';
+import {setMyID} from '../../store/actions/users';
 import storage from '@react-native-firebase/storage';
 
 const ContactScreen = ({navigation}) => {
@@ -17,9 +17,9 @@ const ContactScreen = ({navigation}) => {
 
   const dispatch = useDispatch();
 
-  const uid = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.myid);
   const mydetails = useSelector(state => state.user.mydetails);
-
+  console.log('status', mydetails);
   useEffect(() => {
     Contacts.getAll()
       .then(contacts => {
@@ -176,6 +176,7 @@ const ContactScreen = ({navigation}) => {
                                 if (documentSnapshot.exists) {
                                   obj1.name = documentSnapshot.data().name;
                                   obj1.phone = documentSnapshot.data().phone;
+                                  obj1.about = documentSnapshot.data().about;
                                   storage()
                                     .ref(`${otherUserId}.jpg`)
                                     .getDownloadURL()
@@ -200,15 +201,17 @@ const ContactScreen = ({navigation}) => {
                                             name: mydetails?.name,
                                             profile: mydetails?.image_url,
                                             phone: mydetails?.phone,
+                                            about: mydetails?.about,
                                           },
                                           [otherUserId]: {
                                             name: obj1.name,
                                             profile: obj1.profile,
                                             phone: obj1?.phone,
+                                            about: obj1?.about,
                                           },
                                         },
                                       };
-                                      console.log('ress', obj1.profile);
+                                      console.log('ress', channelObj);
                                       firestore()
                                         .collection('Channels')
                                         .doc(uid + otherUserId)

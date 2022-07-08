@@ -11,7 +11,7 @@ import {
 
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
-import {setMyDetails, setToken} from '../../store/actions/users';
+import {setMyDetails, setMyID} from '../../store/actions/users';
 import firestore from '@react-native-firebase/firestore';
 import database from '@react-native-firebase/database';
 import * as ImagePicker from 'react-native-image-picker';
@@ -89,7 +89,7 @@ const AddDetails = ({route}) => {
           })
           .then(() => console.log('RData set.'));
 
-        dispatch(setToken(uid));
+        dispatch(setMyID(uid));
         let obj = {};
         obj.name = name;
         obj.image_url = url;

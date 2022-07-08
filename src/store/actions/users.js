@@ -1,8 +1,8 @@
-export const SET_TOKEN = 'SET_TOKEN';
+export const SET_MYID = 'SET_MYID';
 export const GET_MY_DETAIL = 'GET_MY_DETAIL';
 
-export const setToken = token => {
-  return {type: SET_TOKEN, payload: token};
+export const setMyID = myid => {
+  return {type: SET_MYID, payload: myid};
 };
 
 export const setMyDetails = mydetails => {

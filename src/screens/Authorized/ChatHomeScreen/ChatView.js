@@ -5,12 +5,14 @@ import moment from 'moment';
 import {useSelector} from 'react-redux';
 
 const ChatView = ({contact, onPress}) => {
-  const uid = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.myid);
+  const data = useSelector(state => state.message.channelDetails);
+
   const reciever = contact?.members.filter(myid => myid !== uid);
   const recieverid = reciever.toString();
   const recieverName = contact?.users_details?.[recieverid].name;
   const recieverProfile = contact?.users_details?.[recieverid].profile;
-  // console.log('111', contact, uid);
+
   return (
     <TouchableOpacity style={styles.contactCon} onPress={onPress}>
       <View style={styles.placeholder}>
@@ -51,7 +53,7 @@ const ChatView = ({contact, onPress}) => {
             paddingTop: 5,
             color: '#fff',
           }}>
-          {/* {moment(contact?.updated_at?.toDate()).format('hh:mm a')} */}
+          {moment(contact?.updated_at)?.format('hh:mm a')}
         </Text>
         {/*{userstatus ?<Text style={{color:'#fff'}}>Online</Text>:<Text style={{color:'#fff'}}>{lastseen?.slice(15,21)}</Text>}*/}
       </View>

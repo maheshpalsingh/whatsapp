@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
 import FastImage from 'react-native-fast-image';
 const MessageView = ({message, onLongPress}) => {
-  const uid = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.myid);
   let myid = message.sender === uid;
   // console.log('delete delete', message?.created_at);
   if (message?.deleted_for_me?.includes(uid)) {

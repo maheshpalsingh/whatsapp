@@ -1,16 +1,16 @@
-import {GET_MY_DETAIL, SET_TOKEN} from '../actions/users';
+import {GET_MY_DETAIL, SET_MYID} from '../actions/users';
 
 const initialState = {
-  token: null,
+  myid: null,
   mydetails: {},
 };
 
 export default (state = initialState, action) => {
   switch (action.type) {
-    case SET_TOKEN:
+    case SET_MYID:
       return {
         ...state,
-        token: action.payload,
+        myid: action.payload,
       };
     case GET_MY_DETAIL:
       return {

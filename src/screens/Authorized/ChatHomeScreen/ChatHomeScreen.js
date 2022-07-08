@@ -15,11 +15,13 @@ import database from '@react-native-firebase/database';
 import firestore from '@react-native-firebase/firestore';
 import {useDispatch, useSelector} from 'react-redux';
 import storage, {firebase} from '@react-native-firebase/storage';
-import {setToken} from '../../../store/actions/users';
+import {setMyDetails, setMyID} from '../../../store/actions/users';
 import * as messageActions from '../../../store/actions/messages';
+import {READ_CHANNEL_DETAILS} from '../../../store/actions/messages';
 
 const ChatHomeScreen = ({navigation}) => {
-  const [channelDetails, setChannelDetails] = useState([]);
+  const channelDetails = useSelector(state => state.message.channelDetails);
+  //const [channelDetails, setChannelDetails] = useState([]);
   const tmpUsers = useRef([]);
   const [channelID, setchannelID] = useState();
   const [userStatus, setStatus] = useState(false);
@@ -29,9 +31,13 @@ const ChatHomeScreen = ({navigation}) => {
   const getLastMessage = useSelector(
     state => state?.message?.lastmessage[channelID],
   );
-  const uid = useSelector(state => state.user.token);
-  const dispatch = useDispatch();
+  console.log('channelDetails;kjjjjj', channelDetails);
 
+  const uid = useSelector(state => state.user.myid);
+  const dispatch = useDispatch();
+  // const getChannelDetails = async () => {
+  //   dispatch(messageActions.readChannelDetails(channelDetails?.id));
+  // };
   // console.log('kkkk', getLastMessage);
   const lastMessage = getLastMessage || [];
 
@@ -114,26 +120,7 @@ const ChatHomeScreen = ({navigation}) => {
     };
   }, [uid]);
 
-  // useEffect(() => {
-  //   // database()
-  //   //   .ref(`/users`)
-  //   //   .once('value')
-  //   //   .then(snapshot => {
-  //   //     // console.log('User data: ', snapshot.val());
-  //   //     setUsers(snapshot.val())
-  //   //   });
-  //   firestore()
-  //     .collection('Users')
-  //     .get()
-  //     .then(querySnapshot => {
-  //     //  console.log('Total users: ', querySnapshot.size);
-  //
-  //       querySnapshot.forEach(documentSnapshot => {
-  //         // console.log('User ID: ', documentSnapshot.id, documentSnapshot.data());
-  //       });
-  //     });
-  //   }, []);
-
+  //getting channels
   useEffect(() => {
     firestore()
       .collection('Channels')
@@ -141,6 +128,7 @@ const ChatHomeScreen = ({navigation}) => {
       .onSnapshot(documentSnapshot => {
         if (!documentSnapshot?.empty) {
           const temp = [];
+
           documentSnapshot?.docs.forEach(doc => {
             const data = doc.data();
 
@@ -150,11 +138,14 @@ const ChatHomeScreen = ({navigation}) => {
               created_at: data?.created_at?.toDate(),
               updated_at: data?.updated_at?.toDate(),
             };
+            //console.log('obj=============', obj);
             temp.push(obj);
+            // console.log(obj, doc.id);
           });
-
+          // console.log('temp=============', temp);
           if (temp.length) {
-            setChannelDetails(temp);
+            // setChannelDetails(temp);
+            dispatch(messageActions.readChannelDetails(temp));
           }
         }
       });
@@ -165,7 +156,7 @@ const ChatHomeScreen = ({navigation}) => {
   };
 
   const keyExtractor = (item, idx) => {
-    // console.log(item);
+    //console.log(item);
     return item?.recordID?.toString() || idx.toString();
   };
   const renderItem = ({item, index}) => {
@@ -190,7 +181,7 @@ const ChatHomeScreen = ({navigation}) => {
   return (
     <View style={{backgroundColor: '#101D24', flexGrow: 1}}>
       <StatusBar barStyle="light-content" backgroundColor="#101D24" />
-      {channelDetails.length !== 0 && (
+      {channelDetails?.length !== 0 && (
         <FlatList
           data={channelDetails}
           renderItem={renderItem}

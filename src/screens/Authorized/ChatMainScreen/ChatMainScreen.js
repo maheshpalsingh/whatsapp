@@ -42,8 +42,9 @@ const ChatMainScreen = ({route}) => {
   const selectedID = useRef();
   const messageSenderID = useRef();
   const flatlistRef = useRef();
-  const uid = useSelector(state => state.user.token);
+  const uid = useSelector(state => state.user.myid);
   const channelDetails = route?.params?.item;
+  //console.log(channelDetails);
   const [animating, setAnimating] = useState(false);
 
   const [modalVisible1, setModalVisible1] = useState(false);
@@ -61,6 +62,8 @@ const ChatMainScreen = ({route}) => {
     state => state.message.messages[channelDetails?.id],
   );
 
+  const getchannelDetails = useSelector(state => state.message.channelDetails);
+
   const subscriber = useRef();
 
   const message = getMessage || [];
@@ -72,6 +75,7 @@ const ChatMainScreen = ({route}) => {
   const recieverName = channelDetails?.users_details?.[recieverid].name;
   const recieverProfile = channelDetails?.users_details?.[recieverid].profile;
   const recieverPhone = channelDetails?.users_details?.[recieverid].phone;
+  const recieverStatus = channelDetails?.users_details?.[recieverid].about;
 
   const db = firestore().collection('Channels').doc(channelDetails?.id);
 
@@ -84,7 +88,7 @@ const ChatMainScreen = ({route}) => {
   };
 
   useEffect(() => {
-    console.log('================', message);
+    // console.log('================', message);
     if (message.length === 0) {
       console.log('initial');
       getAllMessages().then();
@@ -276,26 +280,55 @@ const ChatMainScreen = ({route}) => {
             deleted_for_me: [uid],
           };
           allmessages[index] = obj1;
+
           dispatch({
             type: READ_MESSAGE,
             payload: {[channelDetails?.id]: allmessages},
           });
 
-          channelRef.get().then(document => {
-            if (document.data().message_id === selectedID.current) {
-              console.log('dfsgvfd');
-              channelRef
-                .set(
-                  {
-                    deleted_for_me:
-                      firebase.firestore.FieldValue.arrayUnion(uid),
-                    updated_at: new Date(),
-                  },
-                  {merge: true},
-                )
-                .then(() => setnewMessage(''));
-            }
-          });
+          if (index === 0) {
+            console.log('last message');
+            let updateLastMessage = allmessages[1].text;
+            console.log('updateLastMessage', updateLastMessage);
+            console.log('data', getchannelDetails);
+
+            let index1 = getchannelDetails.findIndex(
+              o => o.id === channelDetails?.id,
+            );
+            let allChannel = getchannelDetails;
+            console.log('index1', index1);
+            let updateChannel = {
+              ...allChannel[index1],
+              last_message: updateLastMessage,
+            };
+            allChannel[index1] = updateChannel;
+            console.log('updateChannel', allChannel);
+            dispatch(messageActions.readChannelDetails(allChannel));
+            // dispatch(messageActions.readChannelDetails());
+          }
+          // channelRef.get().then(document => {
+          //   if (document.data().message_id === selectedID.current) {
+          //     console.log('dfsgvfd');
+          //     let updateLastMessage = allmessages[1].text;
+          //     if (allmessages[1].type !== 'text') {
+          //       updateLastMessage = 'Photo';
+          //     }
+          //     console.log('last', updateLastMessage);
+          //     channelRef
+          //       .set(
+          //         {
+          //           last_message: updateLastMessage,
+          //           last_message_type:
+          //             updateLastMessage === 'Photo' ? 'photo' : 'text',
+          //           deleted_for_me:
+          //             firebase.firestore.FieldValue.arrayUnion(uid),
+          //           updated_at: new Date(),
+          //         },
+          //         {merge: true},
+          //       )
+          //       .then(() => setnewMessage(''));
+          //   }
+          // });
         });
     } else {
       console.log('sss');
@@ -388,10 +421,19 @@ const ChatMainScreen = ({route}) => {
               },
             )
             .then(() => {
-              // dispatch({
-              //   type: READ_MESSAGE,
-              //   payload: {[channelDetails?.id]: [{}]},
-              // });
+              channelRef.set(
+                {
+                  updated_at: new Date(),
+                  last_message_type: '',
+                  last_message: '',
+                },
+                {merge: true},
+              );
+
+              dispatch({
+                type: READ_MESSAGE,
+                payload: {[channelDetails?.id]: []},
+              });
             });
         }),
       );
@@ -426,66 +468,65 @@ const ChatMainScreen = ({route}) => {
       } else {
         const source = response.assets[0].uri;
 
-        // let m1 = new Date();
-        // storage()
-        //   .ref(`messages/${channelDetails?.id}/${m1}.jpg`)
-        //   .putFile(source, {
-        //     cacheControl: 'no-store', // disable caching
-        //   })
-        //   .then(res => {
-        //     const picRef = storage().ref(
-        //       `messages/${channelDetails?.id}/${m1}.jpg`,
-        //     );
-        //     picRef
-        //       .getDownloadURL()
-        //       .then(url => {
-        //         if (url) {
-        //           const message_ref = channelRef.collection('messages').doc();
+        let m1 = new Date();
+        storage()
+          .ref(`messages/${channelDetails?.id}/${m1}.jpg`)
+          .putFile(source, {
+            cacheControl: 'no-store', // disable caching
+          })
+          .then(res => {
+            const picRef = storage().ref(
+              `messages/${channelDetails?.id}/${m1}.jpg`,
+            );
+            picRef
+              .getDownloadURL()
+              .then(url => {
+                if (url) {
+                  const message_ref = channelRef.collection('messages').doc();
 
-        //           const obj = {
-        //             type: 'photo',
-        //             sender: uid,
-        //             image: url,
-        //             created_at: new Date(),
-        //             updated_at: new Date(),
-        //             seen: false,
-        //           };
+                  const obj = {
+                    type: 'photo',
+                    sender: uid,
+                    image: url,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    seen: false,
+                  };
 
-        //           message_ref.set(obj, {merge: true}).then(async () => {
-        //             dispatch({
-        //               type: READ_MESSAGE,
-        //               payload: {
-        //                 [channelDetails?.id]: [
-        //                   {message_id: message_ref.id, ...obj},
-        //                   ...message,
-        //                 ],
-        //               },
-        //             });
-        //           });
+                  message_ref.set(obj, {merge: true}).then(async () => {
+                    dispatch({
+                      type: READ_MESSAGE,
+                      payload: {
+                        [channelDetails?.id]: [
+                          {message_id: message_ref.id, ...obj},
+                          ...message,
+                        ],
+                      },
+                    });
+                  });
 
-        //           channelRef.set(
-        //             {
-        //               updated_at: new Date(),
-        //               sender_id: uid,
-        //               receiver_id: recieverid,
-        //               seen: false,
-        //               deleted_for_all: false,
-        //               last_message_type: 'photo',
-        //               image: url,
-        //               last_message_seen: false,
-        //               message_id: message_ref.id,
-        //             },
-        //             {
-        //               merge: true,
-        //             },
-        //           );
-
-        //         }
-        //       })
-        //       .catch(error => {
-        //         console.log('Error getting image 1: ', error.message);
-        //       });
-        //   });
+                  channelRef.set(
+                    {
+                      updated_at: new Date(),
+                      sender_id: uid,
+                      receiver_id: recieverid,
+                      seen: false,
+                      deleted_for_all: false,
+                      last_message_type: 'photo',
+                      image: url,
+                      last_message_seen: false,
+                      message_id: message_ref.id,
+                    },
+                    {
+                      merge: true,
+                    },
+                  );
+                }
+              })
+              .catch(error => {
+                console.log('Error getting image 1: ', error.message);
+              });
+          });
       }
     });
     setAnimating(false);
@@ -607,6 +648,7 @@ const ChatMainScreen = ({route}) => {
               recieverProfile,
               recieverName,
               recieverPhone,
+              recieverStatus,
             })
           }
           style={{
