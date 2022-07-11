@@ -6,8 +6,8 @@ import {useSelector} from 'react-redux';
 
 const ChatView = ({contact, onPress}) => {
   const uid = useSelector(state => state.user.myid);
-  const data = useSelector(state => state.message.channelDetails);
 
+  //console.log('111', contact);
   const reciever = contact?.members.filter(myid => myid !== uid);
   const recieverid = reciever.toString();
   const recieverName = contact?.users_details?.[recieverid].name;
@@ -55,6 +55,19 @@ const ChatView = ({contact, onPress}) => {
           }}>
           {moment(contact?.updated_at)?.format('hh:mm a')}
         </Text>
+        {contact?.read_count > 0 && contact?.sender_id !== uid && (
+          <View
+            style={{
+              marginTop: 10,
+              backgroundColor: '#00D789',
+              borderRadius: 100,
+              height: 20,
+              width: 20,
+              justifyContent: 'center',
+            }}>
+            <Text style={{alignSelf: 'center'}}>{contact?.read_count}</Text>
+          </View>
+        )}
         {/*{userstatus ?<Text style={{color:'#fff'}}>Online</Text>:<Text style={{color:'#fff'}}>{lastseen?.slice(15,21)}</Text>}*/}
       </View>
     </TouchableOpacity>

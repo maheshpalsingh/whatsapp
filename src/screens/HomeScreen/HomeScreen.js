@@ -14,11 +14,13 @@ import StatusScreen from '../Authorized/StatusScreen/StatusScreen';
 import Test from '../Authorized/Test/Test';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {useSelector} from 'react-redux';
 const Tab = createMaterialTopTabNavigator();
 
 export default function HomeScreen({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
-
+  const totalChat = useSelector(state => state.message.total_read);
+  console.log('aadsdsdsda', totalChat);
   const openModal = () => {
     setModalVisible(!modalVisible);
   };
@@ -99,7 +101,33 @@ export default function HomeScreen({navigation}) {
         <Tab.Screen
           name="Chat"
           component={ChatHomeScreen}
-          options={{tabBarLabel: 'CHAT'}}
+          options={{
+            tabBarLabel: `Chat`,
+            tabBarBadge: () =>
+              totalChat ? (
+                <View
+                  key={totalChat + ''}
+                  style={{
+                    backgroundColor: '#00D789',
+                    borderRadius: 15,
+                    height: 25,
+                    width: 25,
+                    marginTop: 10,
+                    marginRight: 10,
+                  }}>
+                  <Text
+                    style={{
+                      color: 'white',
+                      padding: 4,
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      fontSize: 15,
+                    }}>
+                    {totalChat + ''}
+                  </Text>
+                </View>
+              ) : null,
+          }}
         />
         <Tab.Screen
           name="Profile"

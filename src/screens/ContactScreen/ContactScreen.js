@@ -1,11 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, SafeAreaView, StyleSheet, FlatList} from 'react-native';
+import {SafeAreaView, StyleSheet, FlatList} from 'react-native';
 import Contact from './Contact';
 import Contacts from 'react-native-contacts';
-import database from '@react-native-firebase/database';
+
 import {useDispatch, useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
-import {setMyID} from '../../store/actions/users';
+
 import storage from '@react-native-firebase/storage';
 
 const ContactScreen = ({navigation}) => {
@@ -22,6 +22,7 @@ const ContactScreen = ({navigation}) => {
   console.log('status', mydetails);
   useEffect(() => {
     Contacts.getAll()
+
       .then(contacts => {
         for (let key in contacts) {
           let contactdb1 = contacts[key].phoneNumbers[0].number.replace(
@@ -194,7 +195,7 @@ const ContactScreen = ({navigation}) => {
                                         deleted_for_all: false,
                                         last_message_type: '',
                                         last_message: '',
-                                        last_message_seen: false,
+
                                         message_id: '',
                                         users_details: {
                                           [uid]: {

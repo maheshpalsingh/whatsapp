@@ -3,6 +3,7 @@ import firestore from '@react-native-firebase/firestore';
 export const READ_MESSAGE = 'READ_MESSAGE';
 export const READ_LASTMESSAGE = 'READ_LASTMESSAGE';
 export const READ_CHANNEL_DETAILS = 'READ_CHANNEL_DETAILS';
+export const TOTALCHAT = 'TOTALCHAT';
 
 export const readAllMessages = channelID => {
   return async dispatch => {
@@ -129,6 +130,11 @@ export const readLastMessage = channelID => {
       console.log(e);
     }
   };
+};
+
+export const setTotatChat = n => {
+  console.log('Nssss', n);
+  return {type: TOTALCHAT, payload: n};
 };
 
 // export const readChannelDetails = channelID => {

@@ -19,9 +19,23 @@ const MessageView = ({message, onLongPress}) => {
         {
           backgroundColor: myid ? '#A0D995' : 'grey',
           alignSelf: myid ? 'flex-end' : 'flex-start',
+          marginLeft: !myid && 15,
+          marginRight: myid && 15,
         },
       ]}
       onLongPress={() => onLongPress(message?.message_id, message?.sender)}>
+      {myid ? (
+        <Image
+          source={require('../../../assets/imageUI/Vector28.png')}
+          style={{height: 10, left: 95, position: 'absolute'}}
+        />
+      ) : (
+        <Image
+          source={require('../../../assets/imageUI/Vector27.png')}
+          style={{height: 10, left: -5, position: 'absolute'}}
+        />
+      )}
+
       {/*<Text> {message.sender}</Text>*/}
 
       {message.type === 'photo' && (

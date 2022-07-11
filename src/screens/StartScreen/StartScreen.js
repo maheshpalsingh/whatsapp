@@ -1,11 +1,13 @@
 import React from 'react';
-import {Button, Image, Text, View, TouchableOpacity} from 'react-native';
+import {Image, Text, View, TouchableOpacity} from 'react-native';
 
 import {useNavigation} from '@react-navigation/native';
 
 const StartScreen = () => {
   const navigation = useNavigation();
 
+
+  
   return (
     <View style={{backgroundColor: '#222D36', flex: 1}}>
       <View style={{marginTop: 100}}>

@@ -10,16 +10,15 @@ import {
   TouchableOpacity,
   SafeAreaView,
   FlatList,
-  AppState,
   StatusBar,
-  ImageBackground,
   Pressable,
-  Alert,
   ActivityIndicator,
+  Keyboard,
+  ImageBackground,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import firestore from '@react-native-firebase/firestore';
+import firestore, {FieldValue} from '@react-native-firebase/firestore';
 import {useDispatch, useSelector} from 'react-redux';
 import * as ImagePicker from 'react-native-image-picker';
 import MessageView from './MessageView';
@@ -28,14 +27,18 @@ import {useNavigation} from '@react-navigation/native';
 
 import storage, {firebase} from '@react-native-firebase/storage';
 import database from '@react-native-firebase/database';
-import axios from 'axios';
-import * as messageActions from '../../../store/actions/messages';
-import moment from 'moment';
+import {
+  setTotatChat,
+  readAllMessages,
+  readChannelDetails,
+  readNewMessage,
+} from '../../../store/actions/messages';
 import {READ_MESSAGE} from '../../../store/actions/messages';
 import FastImage from 'react-native-fast-image';
 
 const ChatMainScreen = ({route}) => {
   const navigation = useNavigation();
+  const totalChat = useSelector(state => state.message.total_read);
   const [userStatus, setStatus] = useState(false);
   const [userLastSeen, setLastSeen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -80,11 +83,11 @@ const ChatMainScreen = ({route}) => {
   const db = firestore().collection('Channels').doc(channelDetails?.id);
 
   const getAllMessages = async () => {
-    dispatch(messageActions.readAllMessages(channelDetails?.id));
+    dispatch(readAllMessages(channelDetails?.id));
   };
   const lastVisible = message[0]?.created_at;
   const getNewMessage = async () => {
-    dispatch(messageActions.readNewMessage(channelDetails?.id, lastVisible));
+    dispatch(readNewMessage(channelDetails?.id, lastVisible));
   };
 
   useEffect(() => {
@@ -118,10 +121,16 @@ const ChatMainScreen = ({route}) => {
           },
         )
         .then(() => {
+          console.log('total chat', totalChat);
+          let newTotal = totalChat - 1;
+          console.log('totalChat111', newTotal);
+
+          dispatch(setTotatChat(newTotal));
           channelRef.set(
             {
               updated_at: new Date(),
               seen: true,
+              read_count: 0,
             },
             {
               merge: true,
@@ -206,10 +215,11 @@ const ChatMainScreen = ({route}) => {
       const obj = {
         type: 'text',
         sender: uid,
-        text: newMessage,
+        text: newMessage.trim(),
         created_at: new Date(),
         updated_at: new Date(),
         seen: false,
+        // last_message_seen: false,
       };
 
       message_ref.set(obj, {merge: true}).then(async () => {
@@ -233,8 +243,9 @@ const ChatMainScreen = ({route}) => {
           deleted_for_all: false,
           last_message_type: 'text',
           last_message: newMessage,
-          last_message_seen: false,
+          //last_message_seen: false,
           message_id: message_ref.id,
+          read_count: firestore.FieldValue.increment(1),
         },
         {
           merge: true,
@@ -289,21 +300,21 @@ const ChatMainScreen = ({route}) => {
           if (index === 0) {
             console.log('last message');
             let updateLastMessage = allmessages[1].text;
-            console.log('updateLastMessage', updateLastMessage);
-            console.log('data', getchannelDetails);
+            //console.log('updateLastMessage', updateLastMessage);
+            //console.log('data', getchannelDetails);
 
             let index1 = getchannelDetails.findIndex(
               o => o.id === channelDetails?.id,
             );
             let allChannel = getchannelDetails;
-            console.log('index1', index1);
+            //console.log('index1', index1);
             let updateChannel = {
               ...allChannel[index1],
               last_message: updateLastMessage,
             };
             allChannel[index1] = updateChannel;
-            console.log('updateChannel', allChannel);
-            dispatch(messageActions.readChannelDetails(allChannel));
+            //console.log('updateChannel', allChannel);
+            dispatch(readChannelDetails(allChannel));
             // dispatch(messageActions.readChannelDetails());
           }
           // channelRef.get().then(document => {
@@ -514,7 +525,7 @@ const ChatMainScreen = ({route}) => {
                       deleted_for_all: false,
                       last_message_type: 'photo',
                       image: url,
-                      last_message_seen: false,
+                      //last_message_seen: false,
                       message_id: message_ref.id,
                     },
                     {
@@ -539,260 +550,274 @@ const ChatMainScreen = ({route}) => {
   const bg =
     'https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg';
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#222D36'}}>
-      <StatusBar barStyle="light-content" />
+    <>
+      {/* <SafeAreaView style={{flex: 0, backgroundColor: '#222D36'}} /> */}
+      <SafeAreaView style={{flex: 1, backgroundColor: '#222D36'}}>
+        <StatusBar barStyle="light-content" />
 
-      {modalVisible && (
-        <Modal
-          animationType={false}
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            // Alert.alert("Modal has been closed.");
-            setModalVisible(!modalVisible);
-          }}>
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Delete message?</Text>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={deleteForMe}
-                // onPress={() => setModalVisible(!modalVisible)}
-              >
-                <Text style={styles.textStyle}>DELETE FOR ME</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.button, styles.buttonClose]}
-                onPress={() => setModalVisible(!modalVisible)}>
-                <Text style={styles.textStyle}>CANCEL</Text>
-              </Pressable>
-              {messageSenderID.current === uid && (
+        {modalVisible && (
+          <Modal
+            animationType={false}
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              // Alert.alert("Modal has been closed.");
+              setModalVisible(!modalVisible);
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView}>
+                <Text style={styles.modalText}>Delete message?</Text>
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
-                  onPress={deleteForEveryone}>
-                  <Text style={styles.textStyle}>DELETE FOR EVERYONE</Text>
+                  onPress={deleteForMe}
+                  // onPress={() => setModalVisible(!modalVisible)}
+                >
+                  <Text style={styles.textStyle}>DELETE FOR ME</Text>
                 </Pressable>
-              )}
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {modalVisible2 && (
-        <Modal
-          animationType={false}
-          transparent={true}
-          visible={modalVisible2}
-          onRequestClose={() => {
-            // Alert.alert("Modal has been closed.");
-            setModalVisible2(!modalVisible2);
-          }}>
-          <View style={styles.centeredView}>
-            <View style={styles.modalView2}>
-              <View
-                style={{
-                  fontSize: 20,
-                  margin: 10,
-                  paddingLeft: 10,
-                  alignSelf: 'flex-start',
-                }}>
-                <Text
-                  style={{
-                    fontSize: 20,
-                    color: 'white',
-                    fontWeight: '600',
-                    paddingBottom: 20,
-                  }}>
-                  Clear this chat?
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: '#999999',
-                    fontWeight: '600',
-                    paddingBottom: 20,
-                    lineHeight: 22,
-                  }}>
-                  Message will only be removed from this device and your devices
-                  on the newer versions of WhatsApp.
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignSelf: 'flex-end',
-                }}>
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
-                  onPress={() => setModalVisible2(!modalVisible2)}>
+                  onPress={() => setModalVisible(!modalVisible)}>
                   <Text style={styles.textStyle}>CANCEL</Text>
                 </Pressable>
-                <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={clearChats}>
-                  <Text style={styles.textStyle}>CLEAR CHAT</Text>
-                </Pressable>
+                {messageSenderID.current === uid && (
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={deleteForEveryone}>
+                    <Text style={styles.textStyle}>DELETE FOR EVERYONE</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
-          </View>
-        </Modal>
-      )}
+          </Modal>
+        )}
 
-      <KeyboardAvoidingView behavior={'padding'} style={{flex: 1}}>
-        {/*Header*/}
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('UserDetail', {
-              recieverid,
-              recieverProfile,
-              recieverName,
-              recieverPhone,
-              recieverStatus,
-            })
-          }
-          style={{
-            flexDirection: 'row',
-            backgroundColor: '#222D36',
-            padding: 10,
-          }}>
-          <View style={{flexDirection: 'row'}}>
-            <TouchableOpacity
-              style={{justifyContent: 'center', alignchannelDetails: 'center'}}
-              onPress={() => navigation.navigate('Home')}>
-              <Icon name="arrow-back-outline" size={30} color="#fff" />
-            </TouchableOpacity>
-
-            <View style={styles.placeholder}>
-              {recieverProfile === '' ? (
-                <Text style={styles.txt}>{recieverName[0]}</Text>
-              ) : (
-                <FastImage
-                  source={{
-                    uri: recieverProfile,
-                  }}
-                  style={{width: '100%', height: '100%'}}
-                />
-              )}
-            </View>
-          </View>
-
-          <View style={styles.contactDat}>
-            <Text style={styles.name}>{recieverName}</Text>
-            {!!userStatus ? (
-              <Text style={{color: '#fff', marginTop: 5}}>Online</Text>
-            ) : (
-              <Text
-                style={{
-                  color: '#fff',
-                  marginTop: 5,
-                }}>{`last seen at ${userLastSeen}`}</Text>
-            )}
-          </View>
-          <TouchableOpacity
-            style={{justifyContent: 'center', alignchannelDetails: 'center'}}
-            onPress={openModal}>
-            <Icon name="ellipsis-vertical" size={20} color="#fff" />
-          </TouchableOpacity>
-        </TouchableOpacity>
-
-        <View style={{flex: 1}}>
-          <Image source={{uri: bg}} style={StyleSheet.absoluteFillObject} />
-          {modalVisible1 && (
-            <Modal
-              animationType={false}
-              transparent={true}
-              visible={modalVisible1}
-              onRequestClose={() => {
-                // Alert.alert("Modal has been closed.");
-                setModalVisible1(!modalVisible1);
-              }}>
-              <TouchableOpacity
-                style={styles.centeredView1}
-                activeOpacity={1}
-                onPressOut={() => setModalVisible1(!modalVisible1)}>
-                <View style={styles.modalView1}>
-                  <Pressable
+        {modalVisible2 && (
+          <Modal
+            animationType={false}
+            transparent={true}
+            visible={modalVisible2}
+            onRequestClose={() => {
+              // Alert.alert("Modal has been closed.");
+              setModalVisible2(!modalVisible2);
+            }}>
+            <View style={styles.centeredView}>
+              <View style={styles.modalView2}>
+                <View
+                  style={{
+                    fontSize: 20,
+                    margin: 10,
+                    paddingLeft: 10,
+                    alignSelf: 'flex-start',
+                  }}>
+                  <Text
                     style={{
-                      paddingTop: 15,
-                    }}
-                    onPress={() => {
-                      setModalVisible1(!modalVisible1);
-
-                      navigation.navigate('UserDetail', {
-                        recieverid,
-                        recieverProfile,
-                        recieverName,
-                        recieverPhone,
-                      });
+                      fontSize: 20,
+                      color: 'white',
+                      fontWeight: '600',
+                      paddingBottom: 20,
                     }}>
-                    <Text style={styles.modalText1}>View contact</Text>
+                    Clear this chat?
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      color: '#999999',
+                      fontWeight: '600',
+                      paddingBottom: 20,
+                      lineHeight: 22,
+                    }}>
+                    Message will only be removed from this device and your
+                    devices on the newer versions of WhatsApp.
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignSelf: 'flex-end',
+                  }}>
+                  <Pressable
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={() => setModalVisible2(!modalVisible2)}>
+                    <Text style={styles.textStyle}>CANCEL</Text>
                   </Pressable>
                   <Pressable
-                    style={{
-                      paddingTop: 15,
-                    }}
-                    onPress={() => {
-                      setModalVisible1(!modalVisible1);
-                      setModalVisible2(!modalVisible2);
-                    }}>
-                    <Text style={styles.modalText1}>Clear Chats</Text>
+                    style={[styles.button, styles.buttonClose]}
+                    onPress={clearChats}>
+                    <Text style={styles.textStyle}>CLEAR CHAT</Text>
                   </Pressable>
                 </View>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        <KeyboardAvoidingView behavior={'padding'} style={{flex: 1}}>
+          {/*Header*/}
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('UserDetail', {
+                recieverid,
+                recieverProfile,
+                recieverName,
+                recieverPhone,
+                recieverStatus,
+              })
+            }
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#222D36',
+              padding: 10,
+            }}>
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity
+                style={{
+                  justifyContent: 'center',
+                  alignchannelDetails: 'center',
+                }}
+                onPress={() => navigation.navigate('Home')}>
+                <Icon name="arrow-back-outline" size={30} color="#fff" />
               </TouchableOpacity>
-            </Modal>
-          )}
-          <FlatList
-            inverted
-            ref={flatlistRef}
-            data={message}
-            contentContainerStyle={{flexGrow: 1, paddingVertical: 15}}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            style={{flex: 1}}
-          />
-          {animating && (
-            <ActivityIndicator
-              size="large"
-              color="#00ff00"
-              animating={animating}
-            />
-          )}
-        </View>
-        {/*Footer*/}
-        <View style={styles.footer}>
-          <TouchableOpacity onPress={launchCamera} style={styles.emoji}>
-            <Icon name="camera" size={30} color="grey" />
-          </TouchableOpacity>
-          {/*<View style={{ flex: 1,alignSelf:'center' }}>*/}
-          <View style={{flex: 1, flexDirection: 'row'}}>
-            <TextInput
-              placeholder="Message"
-              placeholderTextColor="grey"
-              value={newMessage}
-              onChangeText={t => setnewMessage(t)}
-              style={styles.input}
-            />
+
+              <View style={styles.placeholder}>
+                {recieverProfile === '' ? (
+                  <Text style={styles.txt}>{recieverName[0]}</Text>
+                ) : (
+                  <FastImage
+                    source={{
+                      uri: recieverProfile,
+                    }}
+                    style={{width: '100%', height: '100%'}}
+                  />
+                )}
+              </View>
+            </View>
+
+            <View style={styles.contactDat}>
+              <Text style={styles.name}>{recieverName}</Text>
+              {!!userStatus ? (
+                <Text style={{color: '#fff', marginTop: 5}}>Online</Text>
+              ) : (
+                <Text
+                  style={{
+                    color: '#fff',
+                    marginTop: 5,
+                  }}>{`last seen at ${userLastSeen}`}</Text>
+              )}
+            </View>
             <TouchableOpacity
+              style={{justifyContent: 'center', alignchannelDetails: 'center'}}
+              onPress={openModal}>
+              <Icon name="ellipsis-vertical" size={20} color="#fff" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+
+          <View style={{flex: 1}}>
+            <ImageBackground
+              source={{uri: bg}}
+              style={StyleSheet.absoluteFillObject}>
+              {modalVisible1 && (
+                <Modal
+                  animationType={false}
+                  transparent={true}
+                  visible={modalVisible1}
+                  onRequestClose={() => {
+                    // Alert.alert("Modal has been closed.");
+                    setModalVisible1(!modalVisible1);
+                  }}>
+                  <TouchableOpacity
+                    style={styles.centeredView1}
+                    activeOpacity={1}
+                    onPressOut={() => setModalVisible1(!modalVisible1)}>
+                    <View style={styles.modalView1}>
+                      <Pressable
+                        style={{
+                          paddingTop: 15,
+                        }}
+                        onPress={() => {
+                          setModalVisible1(!modalVisible1);
+
+                          navigation.navigate('UserDetail', {
+                            recieverid,
+                            recieverProfile,
+                            recieverName,
+                            recieverPhone,
+                          });
+                        }}>
+                        <Text style={styles.modalText1}>View contact</Text>
+                      </Pressable>
+                      <Pressable
+                        style={{
+                          paddingTop: 15,
+                        }}
+                        onPress={() => {
+                          setModalVisible1(!modalVisible1);
+                          setModalVisible2(!modalVisible2);
+                        }}>
+                        <Text style={styles.modalText1}>Clear Chats</Text>
+                      </Pressable>
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
+              )}
+              <FlatList
+                inverted
+                ref={flatlistRef}
+                data={message}
+                contentContainerStyle={{flexGrow: 1, paddingVertical: 15}}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                style={{flex: 1}}
+              />
+              {animating && (
+                <ActivityIndicator
+                  size="large"
+                  color="#00ff00"
+                  animating={animating}
+                />
+              )}
+            </ImageBackground>
+          </View>
+
+          {/*Footer*/}
+          <View style={styles.footer}>
+            <TouchableOpacity onPress={launchCamera} style={styles.emoji}>
+              <Icon name="camera" size={30} color="grey" />
+            </TouchableOpacity>
+            {/*<View style={{ flex: 1,alignSelf:'center' }}>*/}
+            <View style={{flex: 1, flexDirection: 'row'}}>
+              <TextInput
+                placeholder="Message"
+                placeholderTextColor="grey"
+                value={newMessage}
+                multiline={true}
+                keyboardType="url"
+                onChangeText={t => {
+                  setnewMessage(t);
+                }}
+                style={styles.input}
+              />
+              {/* <TouchableOpacity
               onPress={recordVoice}
               style={{
                 justifyContent: 'center',
                 right: 40,
               }}>
               <Icon name="mic" size={30} color="grey" />
+            </TouchableOpacity> */}
+            </View>
+            <TouchableOpacity onPress={sendMessage} style={styles.send}>
+              <Icon
+                name="send-outline"
+                size={27}
+                color="white"
+                style={{alignSelf: 'center'}}
+              />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={sendMessage} style={styles.send}>
-            <Icon
-              name="send-outline"
-              size={27}
-              color="white"
-              style={{alignSelf: 'center'}}
-            />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </>
   );
 };
 
@@ -847,6 +872,7 @@ const styles = StyleSheet.create({
     //backgroundColor:'red'
   },
   input: {
+    paddingTop: 15,
     color: '#fff',
     fontSize: 20,
     width: '120%',

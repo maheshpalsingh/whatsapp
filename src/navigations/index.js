@@ -11,6 +11,7 @@ import {
   Settings,
   UserDetail,
   Profile,
+  StatusUI,
 } from '../screens/index';
 import {useDispatch, useSelector, Provider} from 'react-redux';
 import {SafeAreaView} from 'react-native';
@@ -101,6 +102,13 @@ const NavIndex = () => {
             <Stack.Screen
               name="Profile"
               component={Profile}
+              options={{
+                headerTitleStyle: {color: '#fff'},
+              }}
+            />
+            <Stack.Screen
+              name="StatusUI"
+              component={StatusUI}
               options={{
                 headerTitleStyle: {color: '#fff'},
               }}

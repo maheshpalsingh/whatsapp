@@ -8,30 +8,22 @@ import {
   AppState,
   StatusBar,
 } from 'react-native';
-import Icons from 'react-native-vector-icons/Ionicons';
 
 import ChatView from './ChatView';
 import database from '@react-native-firebase/database';
 import firestore from '@react-native-firebase/firestore';
 import {useDispatch, useSelector} from 'react-redux';
-import storage, {firebase} from '@react-native-firebase/storage';
-import {setMyDetails, setMyID} from '../../../store/actions/users';
+import {firebase} from '@react-native-firebase/storage';
 import * as messageActions from '../../../store/actions/messages';
-import {READ_CHANNEL_DETAILS} from '../../../store/actions/messages';
 
 const ChatHomeScreen = ({navigation}) => {
   const channelDetails = useSelector(state => state.message.channelDetails);
-  //const [channelDetails, setChannelDetails] = useState([]);
-  const tmpUsers = useRef([]);
+  const seenCount = useRef(0);
   const [channelID, setchannelID] = useState();
-  const [userStatus, setStatus] = useState(false);
-  const [userLastSeen, setLastSeen] = useState(false);
-  const [lastmessage, setLastMessage] = useState([]);
-  const [myFCM, setFCM] = useState();
   const getLastMessage = useSelector(
     state => state?.message?.lastmessage[channelID],
   );
-  console.log('channelDetails;kjjjjj', channelDetails);
+  //console.log('channelDetails;kjjjjj', channelDetails);
 
   const uid = useSelector(state => state.user.myid);
   const dispatch = useDispatch();
@@ -122,33 +114,52 @@ const ChatHomeScreen = ({navigation}) => {
 
   //getting channels
   useEffect(() => {
-    firestore()
+    const unsubscribe = firestore()
       .collection('Channels')
+      //.orderBy('updated_at', 'desc')
       .where('members', 'array-contains-any', [uid])
       .onSnapshot(documentSnapshot => {
+        console.log('dddddðð');
         if (!documentSnapshot?.empty) {
           const temp = [];
-
+          let a = 0;
           documentSnapshot?.docs.forEach(doc => {
             const data = doc.data();
+            //console.log('ddaattaa', data.read_count, doc.id);
+
+            if (data.read_count > 0 && data.sender_id !== uid) {
+              a++;
+            }
 
             const obj = {
               id: doc.id,
               ...data,
+              totalseenLeft: a,
+              seenLeft: seenCount.current,
               created_at: data?.created_at?.toDate(),
               updated_at: data?.updated_at?.toDate(),
             };
-            //console.log('obj=============', obj);
+
             temp.push(obj);
-            // console.log(obj, doc.id);
           });
-          // console.log('temp=============', temp);
+
           if (temp.length) {
-            // setChannelDetails(temp);
-            dispatch(messageActions.readChannelDetails(temp));
+            dispatch(
+              messageActions.readChannelDetails(
+                temp.sort((a, b) => {
+                  return b.updated_at - a.updated_at;
+                }),
+              ),
+            );
           }
+          //console.log('111', a);
+          console.log('aaa', a);
+          dispatch(messageActions.setTotatChat(a));
         }
       });
+    return () => {
+      unsubscribe && unsubscribe();
+    };
   }, []);
 
   const startConversation = () => {

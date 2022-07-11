@@ -22,12 +22,12 @@ import storage, {firebase} from '@react-native-firebase/storage';
 const Image = createImageProgress(FastImage);
 const Profile = ({route}) => {
   const mydetails = useSelector(state => state?.user?.mydetails);
-
+  const [animating, setAnimating] = useState(true);
   const [newname, setName] = useState(mydetails?.name);
   const [newabout, setAbout] = useState(mydetails?.about);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible1, setModalVisible1] = useState(false);
-  const [animating, setAnimating] = useState(true);
+ 
   const uid = useSelector(state => state.user.myid);
   const dispatch = useDispatch();
 

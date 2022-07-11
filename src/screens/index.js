@@ -18,3 +18,5 @@ export {default as Settings} from './Authorized/Settings/Settings';
 export {default as UserDetail} from './Authorized/UserDetail/UserDetail';
 
 export {default as Profile} from './Authorized/Profile/Profile';
+
+export {default as StatusUI} from './Authorized/StatusScreen/StatusUI';

@@ -1,13 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  Button,
-  Image,
-  Text,
-  View,
-  Dimensions,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import {Text, View, TouchableOpacity, TextInput} from 'react-native';
 
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
@@ -58,7 +50,7 @@ const AddDetails = ({route}) => {
       .getDownloadURL()
       .then(res => {
         seturl(res);
-        // setTransferred(0);
+
         console.log('1');
       })
       .catch(e => {

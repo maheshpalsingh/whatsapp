@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
-import database from '@react-native-firebase/database';
+
 import firestore from '@react-native-firebase/firestore';
 
 const Contact = ({contact, OnPress}) => {
