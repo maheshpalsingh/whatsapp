@@ -121,9 +121,9 @@ const ChatMainScreen = ({route}) => {
           },
         )
         .then(() => {
-          console.log('total chat', totalChat);
+          //console.log('total chat', totalChat);
           let newTotal = totalChat - 1;
-          console.log('totalChat111', newTotal);
+          // console.log('totalChat111', newTotal);
 
           dispatch(setTotatChat(newTotal));
           channelRef.set(

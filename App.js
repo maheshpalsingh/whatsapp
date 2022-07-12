@@ -42,7 +42,6 @@ let persistor = persistStore(Store);
 import SplashScreen from 'react-native-splash-screen';
 
 const App = () => {
-  console.log('wsgter');
   useEffect(() => {
     SplashScreen.hide();
   }, []);

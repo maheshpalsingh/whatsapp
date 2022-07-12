@@ -45,7 +45,7 @@ const MessageView = ({message, onLongPress}) => {
         />
       )}
       {!message.deleted_for_all ? (
-        <Text style={{fontSize: 16}}> {message?.text}</Text>
+        <Text style={{fontSize: 16, left: -5}}> {message?.text}</Text>
       ) : (
         <Text>This message was deleted</Text>
       )}

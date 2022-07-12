@@ -133,7 +133,7 @@ export const readLastMessage = channelID => {
 };
 
 export const setTotatChat = n => {
-  console.log('Nssss', n);
+  //console.log('Nssss', n);
   return {type: TOTALCHAT, payload: n};
 };
 

@@ -122,19 +122,21 @@
 // });
 // export default Test;
 
-
-import React from "react";
-import { ImageBackground, Text, View } from "react-native";
+import React from 'react';
+import {ImageBackground, Text, View} from 'react-native';
 
 const Test = () => {
-  console.log("Test");
+  // console.log("Test");
   return (
-    <ImageBackground source={{ uri: "https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg" }}
-                     resizeMode="cover"
-                     style={{
-                       flex: 1,
-                       justifyContent: "center",
-                     }}>
+    <ImageBackground
+      source={{
+        uri: 'https://i.pinimg.com/originals/40/39/e0/4039e0f1ef08b7b965bacb4641a7af49.jpg',
+      }}
+      resizeMode="cover"
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+      }}>
       <Text>dsf</Text>
     </ImageBackground>
   );

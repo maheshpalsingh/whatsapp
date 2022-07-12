@@ -33,7 +33,7 @@ export default (state = initialState, action) => {
       };
 
     case TOTALCHAT:
-      console.log('reducer', action.payload);
+      //console.log('reducer', action.payload);
       return {
         ...state,
         total_read: action.payload,

@@ -7,6 +7,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import firestore from '@react-native-firebase/firestore';
 
 import storage from '@react-native-firebase/storage';
+import {setAllContacts} from '../../store/actions/users';
 
 const ContactScreen = ({navigation}) => {
   const [contacts, setContacts] = useState([]);
@@ -34,6 +35,8 @@ const ContactScreen = ({navigation}) => {
             cnoPhone.current.push(contactdb1);
           }
         }
+        // console.log(contacts);
+        dispatch(setAllContacts(cnoPhone.current));
         setContacts(contacts);
         //console.log('cnoPhone', cnoPhone);
       })

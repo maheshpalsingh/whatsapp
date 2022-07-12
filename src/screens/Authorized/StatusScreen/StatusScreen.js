@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TouchableOpacity, ScrollView} from 'react-native';
+import {View, Text, TouchableOpacity, ScrollView, FlatList} from 'react-native';
 
-import { useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -10,15 +10,18 @@ import * as ImagePicker from 'react-native-image-picker';
 import ImageResizer from 'react-native-image-resizer';
 import storage, {firebase} from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
+import StatusList from './StatusList';
 
 const StatusScreen = ({navigation}) => {
   const Image = createImageProgress(FastImage);
   const mydetails = useSelector(state => state?.user?.mydetails);
-
+  const allContacts = useSelector(state => state?.user?.contacts);
+  //console.log(mydetails);
   const [animating, setAnimating] = useState(true);
   const [demoImage, setDemoImage] = useState();
+  const [allStatus, setAllStatus] = useState([]);
   const uid = useSelector(state => state.user.myid);
-
+  //console.log('copnatct', allContacts);
   const selectImage = async () => {
     setAnimating(true);
     const options = {
@@ -85,6 +88,9 @@ const StatusScreen = ({navigation}) => {
                           type: 'image',
                           created_at: new Date(),
                           seen: false,
+                          uid,
+                          name: mydetails?.name,
+                          phone: mydetails?.phone,
                         },
                         {merge: true},
                       );
@@ -112,6 +118,29 @@ const StatusScreen = ({navigation}) => {
   };
 
   useEffect(() => {
+    const temp = [];
+    for (let key in allContacts) {
+      const unsubscribe = firestore()
+        .collection('Status')
+        .where('phone', '==', `+91${allContacts[key]}`)
+        .onSnapshot(documentSnapshot => {
+          //console.log('dddddðð');
+          if (!documentSnapshot?.empty) {
+            documentSnapshot?.docs.forEach(doc => {
+              const data = doc.data();
+              // console.log('status', data);
+              temp.push(data);
+            });
+            setAllStatus(temp);
+          }
+        });
+    }
+    return () => {
+      unsubscribe && unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     firestore()
       .collection('Users')
       .doc(uid)
@@ -119,8 +148,24 @@ const StatusScreen = ({navigation}) => {
       .then(d => setDemoImage(d.data()?.status));
   }, []);
 
+  const keyExtractor = (item, idx) => {
+    //console.log('dgg', item);
+    return item?.recordID?.toString() || idx.toString();
+  };
+  const renderItem = ({item, index}) => {
+    console.log('items', item);
+    return (
+      <StatusList
+        status={item.status}
+        name={item.name}
+        onPress={() => navigation.navigate('StatusUI', {status: item.status})}
+      />
+    );
+  };
+
+  console.log('ss', allStatus);
   return (
-    <ScrollView style={{backgroundColor: '#101D24'}}>
+    <View style={{backgroundColor: '#101D24', flex: 1}}>
       <TouchableOpacity
         onPress={selectImage}
         style={{
@@ -171,34 +216,14 @@ const StatusScreen = ({navigation}) => {
         <Text style={{color: '#fff', fontSize: 20, paddingLeft: 10}}>
           Recent updates
         </Text>
-        <TouchableOpacity
-          style={{padding: 15, flexDirection: 'row'}}
-          onPress={() => navigation.navigate('StatusUI', {demoImage})}>
-          <View
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              overflow: 'hidden',
-              //backgroundColor: '#101D24',
-              alignchannelDetails: 'center',
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: 'pink',
-            }}>
-            <FastImage
-              source={{
-                uri: demoImage,
-              }}
-              style={{width: '100%', height: '100%'}}
-            />
-          </View>
-          <View style={{flex: 1, justifyContent: 'center', paddingLeft: 20}}>
-            <Text style={{color: '#fff', fontSize: 20}}>My status</Text>
-          </View>
-        </TouchableOpacity>
+
+        <FlatList
+          data={allStatus}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+        />
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

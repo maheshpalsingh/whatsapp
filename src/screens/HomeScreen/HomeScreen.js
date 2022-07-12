@@ -20,7 +20,7 @@ const Tab = createMaterialTopTabNavigator();
 export default function HomeScreen({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const totalChat = useSelector(state => state.message.total_read);
-  console.log('aadsdsdsda', totalChat);
+  // console.log('aadsdsdsda', totalChat);
   const openModal = () => {
     setModalVisible(!modalVisible);
   };
@@ -108,7 +108,7 @@ export default function HomeScreen({navigation}) {
                 <View
                   key={totalChat + ''}
                   style={{
-                    backgroundColor: '#00D789',
+                    backgroundColor: 'grey',
                     borderRadius: 15,
                     height: 25,
                     width: 25,
@@ -117,7 +117,7 @@ export default function HomeScreen({navigation}) {
                   }}>
                   <Text
                     style={{
-                      color: 'white',
+                      color: '#00D789',
                       padding: 4,
                       justifyContent: 'center',
                       textAlign: 'center',

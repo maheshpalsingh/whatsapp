@@ -3,7 +3,7 @@ import {View, Text} from 'react-native';
 import FastImage from 'react-native-fast-image';
 
 const StatusUI = ({route, navigation}) => {
-  const statusImage = route?.params?.demoImage;
+  const statusImage = route?.params?.status;
   //console.log('123', statusImage);
   setTimeout(() => {
     navigation.goBack();

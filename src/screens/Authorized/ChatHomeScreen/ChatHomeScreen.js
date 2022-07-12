@@ -119,7 +119,7 @@ const ChatHomeScreen = ({navigation}) => {
       //.orderBy('updated_at', 'desc')
       .where('members', 'array-contains-any', [uid])
       .onSnapshot(documentSnapshot => {
-        console.log('dddddðð');
+        //console.log('dddddðð');
         if (!documentSnapshot?.empty) {
           const temp = [];
           let a = 0;
@@ -153,7 +153,7 @@ const ChatHomeScreen = ({navigation}) => {
             );
           }
           //console.log('111', a);
-          console.log('aaa', a);
+          // console.log('aaa', a);
           dispatch(messageActions.setTotatChat(a));
         }
       });
@@ -176,7 +176,6 @@ const ChatHomeScreen = ({navigation}) => {
       <ChatView
         contact={item}
         onPress={() => {
-          // navigation.navigate("ChatMainScreen", { item, channelID,userLastSeen,userStatus });
           navigation.navigate('ChatMainScreen', {
             item: {
               ...item,
